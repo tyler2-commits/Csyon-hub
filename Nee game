@@ -8,9 +8,14 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Sicherer Remote-Event-Zugriff
-local ParkingGame = ReplicatedStorage:WaitForChild("ParkingGame", 5)
-local ActionEvent = ParkingGame and ParkingGame:WaitForChild("Action", 5)
+-- Funktion zum sicheren Abrufen des Remote Events erst bei Bedarf
+local function getActionEvent()
+	local parkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
+	if parkingGame then
+		return parkingGame:FindFirstChild("Action")
+	end
+	return nil
+end
 
 -- Altes GUI löschen falls vorhanden
 if CoreGui:FindFirstChild("ParkingGameUI") then
@@ -196,7 +201,7 @@ Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Parent = MainFrame
 
 ---------------------------------------------------------
--- Logik & Ereignisse (Unverändert übernommen)
+-- Logik & Ereignisse
 ---------------------------------------------------------
 
 local autoCollectActive = false
@@ -249,7 +254,8 @@ CollectToggleBtn.MouseButton1Click:Connect(function()
     if autoCollectActive then
         collectThread = task.spawn(function()
             while autoCollectActive do
-                if ActionEvent then ActionEvent:FireServer("Collect", 1321) end
+                local actionEvent = getActionEvent()
+                if actionEvent then actionEvent:FireServer("Collect", 1321) end
                 task.wait(0.1)
             end
         end)
@@ -266,7 +272,8 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     if autoSearchActive then
         searchThread = task.spawn(function()
             while autoSearchActive do
-                if ActionEvent then ActionEvent:FireServer("Search") end
+                local actionEvent = getActionEvent()
+                if actionEvent then actionEvent:FireServer("Search") end
                 task.wait(0.4)
             end
         end)
@@ -328,7 +335,8 @@ TeleportBlueCarBtn.MouseButton1Click:Connect(function()
                             smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
                             task.wait(0.05)
                             pressKey(Enum.KeyCode.E)
-                            if ActionEvent then pcall(function() ActionEvent:FireServer("Collect", 1321) end) end
+                            local actionEvent = getActionEvent()
+                            if actionEvent then pcall(function() actionEvent:FireServer("Collect", 1321) end) end
                             task.wait(0.35)
                         end
                     end
