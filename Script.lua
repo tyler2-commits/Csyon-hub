@@ -9,44 +9,6 @@ local starterPlayerScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Referenzen aus deiner StarterPlayerScripts Liste
-local clientScripts = {
-	AFK = starterPlayerScripts:FindFirstChild("AFK"),
-	AdsSystem = starterPlayerScripts:FindFirstChild("AdsSystem"),
-	ButtonClickSound = starterPlayerScripts:FindFirstChild("ButtonClickSound"),
-	ClickScriptLocal = starterPlayerScripts:FindFirstChild("ClickScriptLocal"),
-	DJump = starterPlayerScripts:FindFirstChild("DJump"),
-	DeathParts = starterPlayerScripts:FindFirstChild("DeathParts"),
-	Door = starterPlayerScripts:FindFirstChild("Door"),
-	EggSetup = starterPlayerScripts:FindFirstChild("EggSetup"),
-	Favorite = starterPlayerScripts:FindFirstChild("Favorite"),
-	FriendInvite = starterPlayerScripts:FindFirstChild("FriendInvite"),
-	GearShopPrompt = starterPlayerScripts:FindFirstChild("GearShopPrompt"),
-	InvitePart = starterPlayerScripts:FindFirstChild("InvitePart"),
-	ItemsShopSign = starterPlayerScripts:FindFirstChild("ItemsShopSign"),
-	Lava = starterPlayerScripts:FindFirstChild("Lava"),
-	LocalFeedback = starterPlayerScripts:FindFirstChild("LocalFeedback"),
-	NPCRaceClient = starterPlayerScripts:FindFirstChild("NPCRaceClient"),
-	NoJump = starterPlayerScripts:FindFirstChild("NoJump"),
-	PetFollowStyle = starterPlayerScripts:FindFirstChild("PetFollowStyle"),
-	PlayerScriptsLoader = starterPlayerScripts:FindFirstChild("PlayerScriptsLoader"),
-	ProductStandLabels = starterPlayerScripts:FindFirstChild("ProductStandLabels"),
-	PvPRaceClient = starterPlayerScripts:FindFirstChild("PvPRaceClient"),
-	RaceUIPositioner = starterPlayerScripts:FindFirstChild("RaceUIPositioner"),
-	RbxCharacterSounds = starterPlayerScripts:FindFirstChild("RbxCharacterSounds"),
-	SpeedPopups = starterPlayerScripts:FindFirstChild("SpeedPopups"),
-	Subscription = starterPlayerScripts:FindFirstChild("Subscription"),
-	TeleportDoors = starterPlayerScripts:FindFirstChild("TeleportDoors"),
-	TopBar = starterPlayerScripts:FindFirstChild("TopBar"),
-	TowerLabels = starterPlayerScripts:FindFirstChild("TowerLabels"),
-	TreadmillClient = starterPlayerScripts:FindFirstChild("TreadmillClient"),
-	TutorialSystem = starterPlayerScripts:FindFirstChild("TutorialSystem"),
-	UIController = starterPlayerScripts:FindFirstChild("UIController"),
-	VIP = starterPlayerScripts:FindFirstChild("VIP"),
-	WorldUnlocked = starterPlayerScripts:FindFirstChild("WorldUnlocked"),
-	PlayerModule = starterPlayerScripts:FindFirstChild("PlayerModule"),
-}
-
 -- Event-Referenzen (Speed & Spin)
 local increaseSpeedEvent = ReplicatedStorage:FindFirstChild("IncreaseSpeed")
 
@@ -217,7 +179,7 @@ container.Size = UDim2.new(1, -20, 1, -60)
 container.Position = UDim2.new(0, 10, 0, 52)
 container.BackgroundTransparency = 1
 container.BorderSizePixel = 0
-container.CanvasSize = UDim2.new(0, 0, 0, 460)
+container.CanvasSize = UDim2.new(0, 0, 0, 400)
 container.ScrollBarThickness = 3
 container.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 140)
 container.Parent = mainFrame
