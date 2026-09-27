@@ -462,9 +462,9 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Auto Claim TimeGifts (Exakter Cobalt Code)
+-- Auto Claim TimeGifts (Prüft alle 12 Geschenke der Reihe nach)
 local autoTimeGiftActive = false
-createToggle("Auto Claim TimeGifts", false, function(enabled)
+createToggle("Auto Claim TimeGifts (1-12)", false, function(enabled)
 	autoTimeGiftActive = enabled
 	if autoTimeGiftActive then
 		task.spawn(function()
@@ -472,10 +472,15 @@ createToggle("Auto Claim TimeGifts", false, function(enabled)
 				pcall(function()
 					local event = ReplicatedStorage:FindFirstChild("Recv")
 					if event then
-						event:InvokeServer("TimeGift", "1")
+						-- Geht alle 12 Geschenke durch. Der Server prüft dabei den Timer.
+						for i = 1, 12 do
+							if not autoTimeGiftActive then break end
+							event:InvokeServer("TimeGift", tostring(i))
+							task.wait(0.2) -- Kurzer Abstand zwischen den Aufrufen
+						end
 					end
 				end)
-				task.wait(3)
+				task.wait(5) -- Wiederholt den Check alle 5 Sekunden
 			end
 		end)
 	end
