@@ -34,7 +34,7 @@ local supportedGames = {
 	}
 }
 
--- Altes GUI löschen
+-- Altes GUI sicherheitshalber löschen
 if CoreGui:FindFirstChild("CsyonLoaderGUI") then
 	CoreGui.CsyonLoaderGUI:Destroy()
 end
