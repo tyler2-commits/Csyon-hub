@@ -18,6 +18,9 @@ if spinFolder then
 	spinEvent = spinFolder:FindFirstChild("Spin")
 end
 
+-- Gratis-Spin Event (falls separat vorhanden, z.B. "ClaimSpin" oder "FreeSpin")
+local freeSpinEvent = ReplicatedStorage:FindFirstChild("ClaimSpin") or ReplicatedStorage:FindFirstChild("FreeSpin") or (spinFolder and spinFolder:FindFirstChild("Claim"))
+
 -- Rebirth Event Referenz
 local rebirthEvent = nil
 pcall(function()
@@ -262,17 +265,24 @@ createToggle("Ultra Speed Clicker (Max)", false, function(enabled)
 	end
 end).Parent = container
 
--- 2. Spin
+-- 2. Auto Spin (Spins bekommen / abholen)
 local autoSpinActive = false
-local spinConnection
-createToggle("Auto Infinite Spin", false, function(enabled)
+createToggle("Auto Claim / Free Spins", false, function(enabled)
 	autoSpinActive = enabled
 	if autoSpinActive then
-		spinConnection = RunService.Heartbeat:Connect(function()
-			if spinEvent then pcall(function() spinEvent:FireServer() end) end
+		task.spawn(function()
+			while autoSpinActive do
+				pcall(function()
+					if freeSpinEvent then
+						freeSpinEvent:FireServer()
+					elseif spinEvent then
+						-- Versucht, Spins anzufordern falls das Spiel Argumente wie "Claim" oder "Free" akzeptiert
+						spinEvent:FireServer("Claim")
+					end
+				end)
+				task.wait(1)
+			end
 		end)
-	else
-		if spinConnection then spinConnection:Disconnect() spinConnection = nil end
 	end
 end).Parent = container
 
