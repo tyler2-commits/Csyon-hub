@@ -25,7 +25,7 @@ local supportedGames = {
 	{
 		Id = 92630121427800, -- Deine echte ID von "Where Did I Park? 🚗"
 		Name = "Where Did I Park? 🚗",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua
 	},
 	{
 		Id = 1122334455, -- Dritte Spiel-ID (Platzhalter für später)
