@@ -275,7 +275,7 @@ local function createToggle(name, defaultState, callback)
 	local state = defaultState
 	btn.MouseButton1Click:Connect(function()
 		state = not state
-		local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+        local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
 		local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
 		
 		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
@@ -462,7 +462,7 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Auto Claim TimeGifts (Prüft alle 12 Geschenke der Reihe nach)
+-- Auto Claim TimeGifts (Robuster Loop für alle 12 Geschenke)
 local autoTimeGiftActive = false
 createToggle("Auto Claim TimeGifts (1-12)", false, function(enabled)
 	autoTimeGiftActive = enabled
@@ -472,15 +472,18 @@ createToggle("Auto Claim TimeGifts (1-12)", false, function(enabled)
 				pcall(function()
 					local event = ReplicatedStorage:FindFirstChild("Recv")
 					if event then
-						-- Geht alle 12 Geschenke durch. Der Server prüft dabei den Timer.
+						-- Geht alle 12 Geschenke einzeln durch und fängt Fehler ab, 
+						-- falls ein Timer noch nicht abgelaufen ist.
 						for i = 1, 12 do
 							if not autoTimeGiftActive then break end
-							event:InvokeServer("TimeGift", tostring(i))
-							task.wait(0.2) -- Kurzer Abstand zwischen den Aufrufen
+							pcall(function()
+								event:InvokeServer("TimeGift", tostring(i))
+							end)
+							task.wait(0.1)
 						end
 					end
 				end)
-				task.wait(5) -- Wiederholt den Check alle 5 Sekunden
+				task.wait(3) -- Wiederholt den Durchlauf alle 3 Sekunden
 			end
 		end)
 	end
