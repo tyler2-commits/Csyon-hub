@@ -3,9 +3,49 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local StarterPlayer = game:GetService("StarterPlayer")
+local starterPlayerScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- Referenzen aus deiner StarterPlayerScripts Liste
+local clientScripts = {
+	AFK = starterPlayerScripts:FindFirstChild("AFK"),
+	AdsSystem = starterPlayerScripts:FindFirstChild("AdsSystem"),
+	ButtonClickSound = starterPlayerScripts:FindFirstChild("ButtonClickSound"),
+	ClickScriptLocal = starterPlayerScripts:FindFirstChild("ClickScriptLocal"),
+	DJump = starterPlayerScripts:FindFirstChild("DJump"),
+	DeathParts = starterPlayerScripts:FindFirstChild("DeathParts"),
+	Door = starterPlayerScripts:FindFirstChild("Door"),
+	EggSetup = starterPlayerScripts:FindFirstChild("EggSetup"),
+	Favorite = starterPlayerScripts:FindFirstChild("Favorite"),
+	FriendInvite = starterPlayerScripts:FindFirstChild("FriendInvite"),
+	GearShopPrompt = starterPlayerScripts:FindFirstChild("GearShopPrompt"),
+	InvitePart = starterPlayerScripts:FindFirstChild("InvitePart"),
+	ItemsShopSign = starterPlayerScripts:FindFirstChild("ItemsShopSign"),
+	Lava = starterPlayerScripts:FindFirstChild("Lava"),
+	LocalFeedback = starterPlayerScripts:FindFirstChild("LocalFeedback"),
+	NPCRaceClient = starterPlayerScripts:FindFirstChild("NPCRaceClient"),
+	NoJump = starterPlayerScripts:FindFirstChild("NoJump"),
+	PetFollowStyle = starterPlayerScripts:FindFirstChild("PetFollowStyle"),
+	PlayerScriptsLoader = starterPlayerScripts:FindFirstChild("PlayerScriptsLoader"),
+	ProductStandLabels = starterPlayerScripts:FindFirstChild("ProductStandLabels"),
+	PvPRaceClient = starterPlayerScripts:FindFirstChild("PvPRaceClient"),
+	RaceUIPositioner = starterPlayerScripts:FindFirstChild("RaceUIPositioner"),
+	RbxCharacterSounds = starterPlayerScripts:FindFirstChild("RbxCharacterSounds"),
+	SpeedPopups = starterPlayerScripts:FindFirstChild("SpeedPopups"),
+	Subscription = starterPlayerScripts:FindFirstChild("Subscription"),
+	TeleportDoors = starterPlayerScripts:FindFirstChild("TeleportDoors"),
+	TopBar = starterPlayerScripts:FindFirstChild("TopBar"),
+	TowerLabels = starterPlayerScripts:FindFirstChild("TowerLabels"),
+	TreadmillClient = starterPlayerScripts:FindFirstChild("TreadmillClient"),
+	TutorialSystem = starterPlayerScripts:FindFirstChild("TutorialSystem"),
+	UIController = starterPlayerScripts:FindFirstChild("UIController"),
+	VIP = starterPlayerScripts:FindFirstChild("VIP"),
+	WorldUnlocked = starterPlayerScripts:FindFirstChild("WorldUnlocked"),
+	PlayerModule = starterPlayerScripts:FindFirstChild("PlayerModule"),
+}
 
 -- Event-Referenzen (Speed & Spin)
 local increaseSpeedEvent = ReplicatedStorage:FindFirstChild("IncreaseSpeed")
@@ -243,7 +283,6 @@ local function createToggle(name, defaultState, callback)
 		callback(state)
 	end)
 	
-	-- Funktion um den Toggle von außen (z.B. nach Rennende) zu deaktivieren
 	local function setState(newState)
 		if state ~= newState then
 			state = newState
@@ -438,46 +477,57 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Fixiertes Auto Race (Joint automatisch, springt und schaltet sich danach ab)
+-- Perfekt gefixtes Auto Race
 local autoRaceActive = false
+local raceJumpConnection = nil
+
+local function stopAutoRace()
+	autoRaceActive = false
+	if raceJumpConnection then
+		raceJumpConnection:Disconnect()
+		raceJumpConnection = nil
+	end
+end
+
 local raceToggleFrame, setRaceToggleState = createToggle("Auto Race", false, function(enabled)
-	autoRaceActive = enabled
-	
 	if enabled then
+		autoRaceActive = true
+		
 		task.spawn(function()
-			local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace")
+			-- Suche nach möglichen Race-Events im ReplicatedStorage
+			local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace") or ReplicatedStorage:FindFirstChild("JoinRace")
 			if promptEvent then
-				-- Versuche dem Rennen beizutreten
 				pcall(function()
 					promptEvent:FireServer()
 				end)
 			end
 			
-			-- Automatisch springen, solange der Toggle an ist (während des Rennens)
-			local jumpConnection
-			jumpConnection = RunService.Heartbeat:Connect(function()
-				if not autoRaceActive then
-					jumpConnection:Disconnect()
-					return
-				end
-				pcall(function()
-					local char = player.Character
-					if char and char:FindFirstChild("Humanoid") then
-						char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			-- Automatisches Springen während des Rennens
+			if not raceJumpConnection then
+				raceJumpConnection = RunService.Heartbeat:Connect(function()
+					if not autoRaceActive then 
+						if raceJumpConnection then raceJumpConnection:Disconnect() raceJumpConnection = nil end
+						return 
 					end
+					pcall(function()
+						local char = player.Character
+						if char and char:FindFirstChild("Humanoid") then
+							char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						end
+					end)
 				end)
-			end)
+			end
 			
-			-- Nach 25 Sekunden ist das Rennen vorbei -> Toggle automatisch ausschalten
-			task.wait(25)
+			-- Das Rennen dauert standardmäßig ca. 25-30 Sekunden. Danach stoppt es automatisch.
+			task.wait(30)
+			
 			if autoRaceActive then
-				autoRaceActive = false
-				setRaceToggleState(false) -- Schaltet den Schalter optisch aus
-				if jumpConnection then
-					jumpConnection:Disconnect()
-				end
+				stopAutoRace()
+				setRaceToggleState(false) -- Schaltet den Toggle optisch aus
 			end
 		end)
+	else
+		stopAutoRace()
 	end
 end)
 raceToggleFrame.Parent = container
