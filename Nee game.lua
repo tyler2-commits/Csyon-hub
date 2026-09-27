@@ -8,9 +8,27 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Direkter, sicherer Zugriff über deine Pfade-Liste
-local ParkingGame = ReplicatedStorage:WaitForChild("ParkingGame", 5)
-local ActionEvent = ParkingGame and ParkingGame:WaitForChild("Action", 5)
+-- Exakter Zugriff auf deine Pfadstruktur
+local function getParkingGameFolder()
+    local parkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
+    if not parkingGame then
+        for _, child in ipairs(ReplicatedStorage:GetChildren()) do
+            if child.Name == "ParkingGame" then
+                parkingGame = child
+                break
+            end
+        end
+    end
+    return parkingGame
+end
+
+local function getActionEvent()
+    local parkingGame = getParkingGameFolder()
+    if parkingGame then
+        return parkingGame:FindFirstChild("Action")
+    end
+    return nil
+end
 
 -- Altes GUI löschen falls vorhanden
 if CoreGui:FindFirstChild("ParkingGameUI") then
@@ -301,7 +319,8 @@ CollectToggleBtn.MouseButton1Click:Connect(function()
     if autoCollectActive then
         collectThread = task.spawn(function()
             while autoCollectActive do
-                if ActionEvent then ActionEvent:FireServer("Collect", 1321) end
+                local actionEvent = getActionEvent()
+                if actionEvent then actionEvent:FireServer("Collect", 1321) end
                 task.wait(0.1)
             end
         end)
@@ -318,7 +337,8 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     if autoSearchActive then
         searchThread = task.spawn(function()
             while autoSearchActive do
-                if ActionEvent then ActionEvent:FireServer("Search") end
+                local actionEvent = getActionEvent()
+                if actionEvent then actionEvent:FireServer("Search") end
                 task.wait(0.4)
             end
         end)
@@ -387,7 +407,8 @@ TeleportCarBtn.MouseButton1Click:Connect(function()
                             smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
                             task.wait(0.05)
                             pressKey(Enum.KeyCode.E)
-                            if ActionEvent then pcall(function() ActionEvent:FireServer("Collect", 1321) end) end
+                            local actionEvent = getActionEvent()
+                            if actionEvent then pcall(function() actionEvent:FireServer("Collect", 1321) end) end
                             task.wait(0.35)
                         end
                     end
