@@ -213,9 +213,9 @@ ColorSwitchBtn.TextSize = 12
 ColorSwitchBtn.Font = Enum.Font.GothamBold
 ColorSwitchBtn.Parent = ColorPickerFrame
 
-local CSB procedente = Instance.new("UICorner")
-CSB procedente.CornerRadius = UDim.new(0, 8)
-CSB procedente.Parent = ColorSwitchBtn
+local CSBCorner = Instance.new("UICorner")
+CSBCorner.CornerRadius = UDim.new(0, 8)
+CSBCorner.Parent = ColorSwitchBtn
 
 -- Ausgewählte Farbe als Variable ("blau" oder "rot")
 local selectedCarColor = "blau"
