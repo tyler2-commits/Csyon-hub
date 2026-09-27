@@ -111,8 +111,8 @@ openStroke.Parent = openButton
 -- Hauptfenster
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 400, 0, 460)
-mainFrame.Position = UDim2.new(0.5, -200, 0.5, -230)
+mainFrame.Size = UDim2.new(0, 400, 0, 420)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -210)
 mainFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -140,8 +140,8 @@ openButton.MouseButton1Click:Connect(function()
 		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 		
 		TweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0, 400, 0, 460),
-			Position = UDim2.new(0.5, -200, 0.5, -230)
+			Size = UDim2.new(0, 400, 0, 420),
+			Position = UDim2.new(0.5, -200, 0.5, -210)
 		}):Play()
 		
 		TweenService:Create(openButton, TweenInfo.new(0.2), {Rotation = 360}):Play()
@@ -217,7 +217,7 @@ container.Size = UDim2.new(1, -20, 1, -60)
 container.Position = UDim2.new(0, 10, 0, 52)
 container.BackgroundTransparency = 1
 container.BorderSizePixel = 0
-container.CanvasSize = UDim2.new(0, 0, 0, 580)
+container.CanvasSize = UDim2.new(0, 0, 0, 520)
 container.ScrollBarThickness = 3
 container.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 140)
 container.Parent = mainFrame
@@ -457,40 +457,6 @@ createToggle("Auto Rebirth", false, function(enabled)
 					end
 				end)
 				task.wait(1)
-			end
-		end)
-	end
-end).Parent = container
-
--- Auto Claim TimeGifts (Sucht direkt in der PlayerGui nach den Geschenk-Buttons 1 bis 12)
-local autoTimeGiftActive = false
-createToggle("Auto Claim TimeGifts (PlayerGui)", false, function(enabled)
-	autoTimeGiftActive = enabled
-	if autoTimeGiftActive then
-		task.spawn(function()
-			while autoTimeGiftActive do
-				pcall(function()
-					for _, gui in ipairs(playerGui:GetDescendants()) do
-						if not autoTimeGiftActive then break end
-						
-						local nameLower = string.lower(gui.Name)
-						if (string.find(nameLower, "gift") or string.find(nameLower, "time") or string.find(nameLower, "reward")) and (gui:IsA("TextButton") or gui:IsA("ImageButton")) then
-							for i = 1, 12 do
-								if string.find(nameLower, tostring(i)) then
-									if gui.AbsoluteSize.X > 0 then
-										for _, conn in ipairs(getconnections(gui.MouseButton1Click)) do
-											conn:Fire()
-										end
-										for _, conn in ipairs(getconnections(gui.Activated)) do
-											conn:Fire()
-										end
-									end
-								end
-							end
-						end
-					end
-				end)
-				task.wait(5)
 			end
 		end)
 	end
