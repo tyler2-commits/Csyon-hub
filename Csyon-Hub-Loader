@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
 
 local player = Players.LocalPlayer
 local gameId = game.PlaceId
@@ -16,15 +15,15 @@ if queueTeleport then
 	]])
 end
 
--- Trage hier deine 3 unterstützten Spiele ein (PlaceId, Name und Raw-URL)
+-- Trage hier deine unterstützten Spiele ein (mit der echten PlaceId)
 local supportedGames = {
 	{
-		Id = 140317247681516, -- Erste Spiel-ID (+1 Jump Clicker)
+		Id = 140317247681516, -- +1 Jump Clicker
 		Name = "+1 Jump Clicker",
 		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"
 	},
 	{
-		Id = 83867173651969, -- Zweite Spiel-ID (Where Did I Park?)
+		Id = 92630121427800, -- Deine echte ID von "Where Did I Park? 🚗"
 		Name = "Where Did I Park? 🚗",
 		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"
 	},
@@ -127,7 +126,7 @@ closeBtn.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- Container für die 3 Spiel-Felder
+-- Container für die Spiel-Felder
 local gamesContainer = Instance.new("Frame")
 gamesContainer.Size = UDim2.new(1, -40, 0, 175)
 gamesContainer.Position = UDim2.new(0, 20, 0, 65)
@@ -141,7 +140,6 @@ listLayout.Parent = gamesContainer
 
 local isAnyGameSupported = false
 
--- Schleife erstellt automatisch für jedes der 3 Spiele ein schickes Feld
 for i, gameData in ipairs(supportedGames) do
 	local isCurrentGame = (gameId == gameData.Id)
 	if isCurrentGame then
@@ -180,7 +178,7 @@ for i, gameData in ipairs(supportedGames) do
 	nameLabel.Size = UDim2.new(1, -140, 1, 0)
 	nameLabel.Position = UDim2.new(0, 32, 0, 0)
 	nameLabel.BackgroundTransparency = 1
-	nameLabel.Text = gameData.Name .. " (ID: " .. tostring(gameData.Id) .. ")"
+	nameLabel.Text = gameData.Name
 	nameLabel.TextColor3 = isCurrentGame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 170)
 	nameLabel.TextSize = 12
 	nameLabel.Font = Enum.Font.GothamMedium
