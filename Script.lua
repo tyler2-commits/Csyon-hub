@@ -177,7 +177,7 @@ container.Size = UDim2.new(1, -20, 1, -60)
 container.Position = UDim2.new(0, 10, 0, 52)
 container.BackgroundTransparency = 1
 container.BorderSizePixel = 0
-container.CanvasSize = UDim2.new(0, 0, 0, 500)
+container.CanvasSize = UDim2.new(0, 0, 0, 560)
 container.ScrollBarThickness = 3
 container.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 140)
 container.Parent = mainFrame
@@ -243,7 +243,13 @@ local function createToggle(name, defaultState, callback)
 		callback(state)
 	end)
 	
-	return toggleFrame
+	return toggleFrame, function(newState)
+		state = newState
+		local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+		local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
+		TweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Position = targetPos}):Play()
+	end
 end
 
 -- 1. Clicker
@@ -353,7 +359,7 @@ for _, worldName in ipairs(winLocations) do
 		dropdownOpen = false
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 44)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 0}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 500)
+		container.CanvasSize = UDim2.new(0, 0, 0, 560)
 	end)
 end
 
@@ -362,11 +368,11 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	if dropdownOpen then
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 204)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 180}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 650)
+		container.CanvasSize = UDim2.new(0, 0, 0, 710)
 	else
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 44)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 0}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 500)
+		container.CanvasSize = UDim2.new(0, 0, 0, 560)
 	end
 end)
 
@@ -405,7 +411,7 @@ createToggle("Auto Win Teleport", false, function(enabled)
 	end
 end).Parent = container
 
--- 4. Auto Rebirth
+-- Auto Rebirth
 local autoRebirthActive = false
 createToggle("Auto Rebirth", false, function(enabled)
 	autoRebirthActive = enabled
@@ -426,7 +432,51 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- 5. Anti-AFK
+-- Auto Race (Joint automatisch beim Popup, springt, und stoppt nach dem Rennen)
+local autoRaceActive = false
+local raceToggleFrame, setRaceToggleState = createToggle("Auto Race", false, function(enabled)
+	autoRaceActive = enabled
+end)
+raceToggleFrame.Parent = container
+
+task.spawn(function()
+	local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace")
+	if promptEvent then
+		promptEvent.OnClientEvent:Connect(function()
+			if autoRaceActive then
+				-- 1. Dem Rennen beitreten
+				pcall(function()
+					promptEvent:FireServer()
+				end)
+				
+				-- 2. Während des Rennens automatisch springen
+				local jumpConnection
+				jumpConnection = RunService.Heartbeat:Connect(function()
+					pcall(function()
+						local char = player.Character
+						if char and char:FindFirstChild("Humanoid") then
+							char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						end
+					end)
+				end)
+				
+				-- 3. Warten, bis das Rennen vorbei ist (Erkennung über GUI / Status-Änderung oder Timer)
+				-- Wir prüfen z.B. ob ein Race-UI verschwindet oder nach einer festen Zeit von z.B. 30 Sekunden
+				task.wait(25) -- Passe diesen Wert an, falls das Rennen länger/kürzer dauert
+				
+				if jumpConnection then
+					jumpConnection:Disconnect()
+				end
+				
+				-- 4. Schalte den Auto Race Schalter optisch und logisch aus
+				autoRaceActive = false
+				setRaceToggleState(false)
+			end
+		end)
+	end
+end)
+
+-- Anti-AFK Schutz
 createToggle("Anti-AFK Schutz", false, function(enabled)
 	if enabled then
 		local vu = game:GetService("VirtualUser")
@@ -438,7 +488,7 @@ createToggle("Anti-AFK Schutz", false, function(enabled)
 	end
 end).Parent = container
 
--- 6. FPS Boost
+-- FPS Boost
 createToggle("FPS Boost (Partikel aus)", false, function(enabled)
 	for _, v in ipairs(workspace:GetDescendants()) do
 		if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Sparkles") then
