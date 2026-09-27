@@ -211,13 +211,13 @@ closeBtn.MouseButton1Click:Connect(function()
 	tw.Completed:Connect(function() mainFrame.Visible = false end)
 end)
 
--- Scrolling Container für Features
+-- Scrolling Container für Features (CanvasSize erhöht für die neuen Toggles)
 local container = Instance.new("ScrollingFrame")
 container.Size = UDim2.new(1, -20, 1, -60)
 container.Position = UDim2.new(0, 10, 0, 52)
 container.BackgroundTransparency = 1
 container.BorderSizePixel = 0
-container.CanvasSize = UDim2.new(0, 0, 0, 560)
+container.CanvasSize = UDim2.new(0, 0, 0, 620)
 container.ScrollBarThickness = 3
 container.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 140)
 container.Parent = mainFrame
@@ -227,7 +227,7 @@ uiList.SortOrder = Enum.SortOrder.LayoutOrder
 uiList.Padding = UDim.new(0, 10)
 uiList.Parent = container
 
--- Toggle Generator mit externer Update-Funktion
+-- Toggle Generator
 local function createToggle(name, defaultState, callback)
 	local toggleFrame = Instance.new("Frame")
 	toggleFrame.Size = UDim2.new(1, 0, 0, 44)
@@ -283,18 +283,7 @@ local function createToggle(name, defaultState, callback)
 		callback(state)
 	end)
 	
-	local function setState(newState)
-		if state ~= newState then
-			state = newState
-			local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
-			local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
-			TweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Position = targetPos}):Play()
-			callback(state)
-		end
-	end
-	
-	return toggleFrame, setState
+	return toggleFrame
 end
 
 -- 1. Clicker
@@ -367,7 +356,6 @@ arrowLabel.TextSize = 12
 arrowLabel.Font = Enum.Font.GothamBold
 arrowLabel.Parent = dropdownFrame
 
--- Scrollbare Auswahlliste im Dropdown
 local listScroll = Instance.new("ScrollingFrame")
 listScroll.Size = UDim2.new(1, -12, 0, 150)
 listScroll.Position = UDim2.new(0, 6, 0, 46)
@@ -404,7 +392,6 @@ for _, worldName in ipairs(winLocations) do
 		dropdownOpen = false
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 44)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 0}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 560)
 	end)
 end
 
@@ -413,11 +400,9 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	if dropdownOpen then
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 204)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 180}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 710)
 	else
 		TweenService:Create(dropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, 0, 0, 44)}):Play()
 		TweenService:Create(arrowLabel, TweenInfo.new(0.2), {Rotation = 0}):Play()
-		container.CanvasSize = UDim2.new(0, 0, 0, 560)
 	end
 end)
 
@@ -477,60 +462,107 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Perfekt gefixtes Auto Race
+-- 4. GEFİXTES: Auto Race (PvP / Normales Rennen)
 local autoRaceActive = false
-local raceJumpConnection = nil
-
-local function stopAutoRace()
-	autoRaceActive = false
-	if raceJumpConnection then
-		raceJumpConnection:Disconnect()
-		raceJumpConnection = nil
-	end
-end
-
-local raceToggleFrame, setRaceToggleState = createToggle("Auto Race", false, function(enabled)
-	if enabled then
-		autoRaceActive = true
-		
+local raceConnection = nil
+createToggle("Auto Race (Event)", false, function(enabled)
+	autoRaceActive = enabled
+	if autoRaceActive then
 		task.spawn(function()
-			-- Suche nach möglichen Race-Events im ReplicatedStorage
-			local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace") or ReplicatedStorage:FindFirstChild("JoinRace")
-			if promptEvent then
+			while autoRaceActive do
 				pcall(function()
-					promptEvent:FireServer()
-				end)
-			end
-			
-			-- Automatisches Springen während des Rennens
-			if not raceJumpConnection then
-				raceJumpConnection = RunService.Heartbeat:Connect(function()
-					if not autoRaceActive then 
-						if raceJumpConnection then raceJumpConnection:Disconnect() raceJumpConnection = nil end
-						return 
+					local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace") or ReplicatedStorage:FindFirstChild("JoinRace")
+					if promptEvent then
+						promptEvent:FireServer()
 					end
-					pcall(function()
-						local char = player.Character
-						if char and char:FindFirstChild("Humanoid") then
-							char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-						end
-					end)
 				end)
+				
+				-- Automatisch springen während des Rennens
+				if not raceConnection then
+					raceConnection = RunService.Heartbeat:Connect(function()
+						if not autoRaceActive then
+							if raceConnection then raceConnection:Disconnect() raceConnection = nil end
+							return
+						end
+						pcall(function()
+							local char = player.Character
+							if char and char:FindFirstChild("Humanoid") then
+								char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+							end
+						end)
+					end)
+				end
+				task.wait(1)
 			end
-			
-			-- Das Rennen dauert standardmäßig ca. 25-30 Sekunden. Danach stoppt es automatisch.
-			task.wait(30)
-			
-			if autoRaceActive then
-				stopAutoRace()
-				setRaceToggleState(false) -- Schaltet den Toggle optisch aus
+			-- Sofort stoppen, wenn Toggle aus ist
+			if raceConnection then
+				raceConnection:Disconnect()
+				raceConnection = nil
 			end
 		end)
 	else
-		stopAutoRace()
+		autoRaceActive = false
+		if raceConnection then
+			raceConnection:Disconnect()
+			raceConnection = nil
+		end
 	end
-end)
-raceToggleFrame.Parent = container
+end).Parent = container
+
+-- 5. NEU: Auto NPC Race (Eigenes Toggle für NPC-Rennen)
+local autoNpcRaceActive = false
+local npcRaceConnection = nil
+createToggle("Auto NPC Race", false, function(enabled)
+	autoNpcRaceActive = enabled
+	if autoNpcRaceActive then
+		task.spawn(function()
+			while autoNpcRaceActive do
+				pcall(function()
+					-- Sucht im ReplicatedStorage nach Remote-Events die zu NPC-Races gehören
+					for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
+						if v:IsA("RemoteEvent") and (v.Name:lower():find("npc") or v.Name:lower():find("npcrace")) then
+							v:FireServer()
+						end
+					end
+					
+					-- Versucht zusätzlich, NPC-Race Events über Standardnamen anzusprechen
+					local npcEvent = ReplicatedStorage:FindFirstChild("NPCRaceEvent") or ReplicatedStorage:FindFirstChild("StartNPCRace")
+					if npcEvent then
+						npcEvent:FireServer()
+					end
+				end)
+				
+				-- Automatisches Springen für NPC Races
+				if not npcRaceConnection then
+					npcRaceConnection = RunService.Heartbeat:Connect(function()
+						if not autoNpcRaceActive then
+							if npcRaceConnection then npcRaceConnection:Disconnect() npcRaceConnection = nil end
+							return
+						end
+						pcall(function()
+							local char = player.Character
+							if char and char:FindFirstChild("Humanoid") then
+								char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+							end
+						end)
+					end)
+				end
+				task.wait(1)
+			end
+			-- Sofort stoppen, wenn Toggle aus ist
+			if npcRaceConnection then
+				npcRaceConnection:Disconnect()
+				npcRaceConnection = nil
+			end
+		end)
+	else
+		autoNpcRaceActive = false
+		if npcRaceConnection then
+			npcRaceConnection:Disconnect()
+			npcRaceConnection = nil
+		end
+	end
+end).Parent = container
 
 -- Anti-AFK Schutz
 createToggle("Anti-AFK Schutz", false, function(enabled)
