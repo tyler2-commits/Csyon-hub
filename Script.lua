@@ -462,7 +462,7 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Auto Claim TimeGifts (mit deinem Cobalt-Code)
+-- Auto Claim TimeGifts (Exakter Cobalt Code)
 local autoTimeGiftActive = false
 createToggle("Auto Claim TimeGifts", false, function(enabled)
 	autoTimeGiftActive = enabled
@@ -475,7 +475,7 @@ createToggle("Auto Claim TimeGifts", false, function(enabled)
 						event:InvokeServer("TimeGift", "1")
 					end
 				end)
-				task.wait(5) -- Versucht alle 5 Sekunden, das Geschenk einzulösen
+				task.wait(3)
 			end
 		end)
 	end
