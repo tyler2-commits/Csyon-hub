@@ -8,14 +8,9 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Funktion zum sicheren Abrufen des Remote Events erst bei Bedarf
-local function getActionEvent()
-	local parkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
-	if parkingGame then
-		return parkingGame:FindFirstChild("Action")
-	end
-	return nil
-end
+-- Direkter, sicherer Zugriff über deine Pfade-Liste
+local ParkingGame = ReplicatedStorage:WaitForChild("ParkingGame", 5)
+local ActionEvent = ParkingGame and ParkingGame:WaitForChild("Action", 5)
 
 -- Altes GUI löschen falls vorhanden
 if CoreGui:FindFirstChild("ParkingGameUI") then
@@ -37,7 +32,7 @@ else
     ScreenGui.Parent = CoreGui
 end
 
--- Main Frame (Startet klein für die Öffnungs-Animation)
+-- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 0, 0, 0)
@@ -61,8 +56,8 @@ UIStroke.Parent = MainFrame
 
 -- Öffnungs-Animation beim Start
 TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-	Size = UDim2.new(0, 380, 0, 450),
-	Position = UDim2.new(0.5, -190, 0.5, -225)
+	Size = UDim2.new(0, 380, 0, 430),
+	Position = UDim2.new(0.5, -190, 0.5, -215)
 }):Play()
 
 -- Top-Bar (Titel)
@@ -120,22 +115,74 @@ CloseButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- Container für Toggles & Menüs
+-- Container für Elemente
 local ContainerFrame = Instance.new("Frame")
-ContainerFrame.Size = UDim2.new(1, -40, 1, -120)
+ContainerFrame.Size = UDim2.new(1, -40, 1, -110)
 ContainerFrame.Position = UDim2.new(0, 20, 0, 60)
 ContainerFrame.BackgroundTransparency = 1
 ContainerFrame.Parent = MainFrame
 
 local UIList = Instance.new("UIListLayout")
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 10)
+UIList.Padding = UDim.new(0, 8)
 UIList.Parent = ContainerFrame
 
--- Generator für moderne Toggles im einheitlichen Look
+-- Variable für die Autofarm-Farbe ("blau" oder "rot")
+local selectedCarColor = "blau"
+
+-- 1. Farbauswahl-Reihe
+local ColorPickerFrame = Instance.new("Frame")
+ColorPickerFrame.Name = "ColorPicker"
+ColorPickerFrame.Size = UDim2.new(1, 0, 0, 45)
+ColorPickerFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+ColorPickerFrame.BorderSizePixel = 0
+ColorPickerFrame.Parent = ContainerFrame
+
+local CPCorner = Instance.new("UICorner")
+CPCorner.CornerRadius = UDim.new(0, 10)
+CPCorner.Parent = ColorPickerFrame
+
+local CPLabel = Instance.new("TextLabel")
+CPLabel.Size = UDim2.new(1, -120, 1, 0)
+CPLabel.Position = UDim2.new(0, 15, 0, 0)
+CPLabel.Text = "Autofarm Farbe"
+CPLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+CPLabel.TextSize = 13
+CPLabel.Font = Enum.Font.GothamMedium
+CPLabel.TextXAlignment = Enum.TextXAlignment.Left
+CPLabel.BackgroundTransparency = 1
+CPLabel.Parent = ColorPickerFrame
+
+local ColorSwitchBtn = Instance.new("TextButton")
+ColorSwitchBtn.Size = UDim2.new(0, 90, 0, 26)
+ColorSwitchBtn.Position = UDim2.new(1, -100, 0.5, -13)
+ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
+ColorSwitchBtn.Text = "BLAU"
+ColorSwitchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ColorSwitchBtn.TextSize = 12
+ColorSwitchBtn.Font = Enum.Font.GothamBold
+ColorSwitchBtn.Parent = ColorPickerFrame
+
+local CSBCorner = Instance.new("UICorner")
+CSBCorner.CornerRadius = UDim.new(0, 8)
+CSBCorner.Parent = ColorSwitchBtn
+
+ColorSwitchBtn.MouseButton1Click:Connect(function()
+    if selectedCarColor == "blau" then
+        selectedCarColor = "rot"
+        ColorSwitchBtn.Text = "ROT"
+        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    else
+        selectedCarColor = "blau"
+        ColorSwitchBtn.Text = "BLAU"
+        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
+    end
+end)
+
+-- Generator für moderne Toggles
 local function createToggleRow(labelText, defaultState)
     local ToggleFrame = Instance.new("Frame")
-    ToggleFrame.Size = UDim2.new(1, 0, 0, 48)
+    ToggleFrame.Size = UDim2.new(1, 0, 0, 45)
     ToggleFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
     ToggleFrame.BorderSizePixel = 0
     ToggleFrame.Parent = ContainerFrame
@@ -181,57 +228,6 @@ local function createToggleRow(labelText, defaultState)
     return ToggleBg, ToggleCircle
 end
 
--- Farbauswahl-Zeile (Dropdown-artiger Umschalter für Blau / Rot)
-local ColorPickerFrame = Instance.new("Frame")
-ColorPickerFrame.Size = UDim2.new(1, 0, 0, 48)
-ColorPickerFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
-ColorPickerFrame.BorderSizePixel = 0
-ColorPickerFrame.Parent = ContainerFrame
-
-local CPCorner = Instance.new("UICorner")
-CPCorner.CornerRadius = UDim.new(0, 10)
-CPCorner.Parent = ColorPickerFrame
-
-local CPLabel = Instance.new("TextLabel")
-CPLabel.Size = UDim2.new(1, -120, 1, 0)
-CPLabel.Position = UDim2.new(0, 15, 0, 0)
-CPLabel.Text = "Autofarm Farbe"
-CPLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
-CPLabel.TextSize = 13
-CPLabel.Font = Enum.Font.GothamMedium
-CPLabel.TextXAlignment = Enum.TextXAlignment.Left
-CPLabel.BackgroundTransparency = 1
-CPLabel.Parent = ColorPickerFrame
-
-local ColorSwitchBtn = Instance.new("TextButton")
-ColorSwitchBtn.Size = UDim2.new(0, 95, 0, 28)
-ColorSwitchBtn.Position = UDim2.new(1, -105, 0.5, -14)
-ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255) -- Startet bei Blau
-ColorSwitchBtn.Text = "BLAU"
-ColorSwitchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ColorSwitchBtn.TextSize = 12
-ColorSwitchBtn.Font = Enum.Font.GothamBold
-ColorSwitchBtn.Parent = ColorPickerFrame
-
-local CSBCorner = Instance.new("UICorner")
-CSBCorner.CornerRadius = UDim.new(0, 8)
-CSBCorner.Parent = ColorSwitchBtn
-
--- Ausgewählte Farbe als Variable ("blau" oder "rot")
-local selectedCarColor = "blau"
-
-ColorSwitchBtn.MouseButton1Click:Connect(function()
-    if selectedCarColor == "blau" then
-        selectedCarColor = "rot"
-        ColorSwitchBtn.Text = "ROT"
-        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    else
-        selectedCarColor = "blau"
-        ColorSwitchBtn.Text = "BLAU"
-        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
-    end
-end)
-
 -- Toggles erstellen
 local CollectToggleBtn, CollectCircle = createToggleRow("Auto-Collect (1321)", false)
 local SearchToggleBtn, SearchCircle = createToggleRow("Auto-Search Event", false)
@@ -241,8 +237,8 @@ local TeleportValuablesBtn, TeleportValuablesCircle = createToggleRow("Fly Valua
 -- Footer Status
 local Footer = Instance.new("TextLabel")
 Footer.Name = "FooterStatus"
-Footer.Size = UDim2.new(1, -40, 0, 30)
-Footer.Position = UDim2.new(0, 20, 1, -40)
+Footer.Size = UDim2.new(1, -40, 0, 25)
+Footer.Position = UDim2.new(0, 20, 1, -35)
 Footer.Text = "Status: Bereit"
 Footer.TextColor3 = Color3.fromRGB(0, 255, 140)
 Footer.TextSize = 12
@@ -305,8 +301,7 @@ CollectToggleBtn.MouseButton1Click:Connect(function()
     if autoCollectActive then
         collectThread = task.spawn(function()
             while autoCollectActive do
-                local actionEvent = getActionEvent()
-                if actionEvent then actionEvent:FireServer("Collect", 1321) end
+                if ActionEvent then ActionEvent:FireServer("Collect", 1321) end
                 task.wait(0.1)
             end
         end)
@@ -323,8 +318,7 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     if autoSearchActive then
         searchThread = task.spawn(function()
             while autoSearchActive do
-                local actionEvent = getActionEvent()
-                if actionEvent then actionEvent:FireServer("Search") end
+                if ActionEvent then ActionEvent:FireServer("Search") end
                 task.wait(0.4)
             end
         end)
@@ -333,7 +327,7 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 3. Auto Car Farm (Blau oder Rot auswählbar)
+-- 3. Auto Car Farm (Blau oder Rot)
 TeleportCarBtn.MouseButton1Click:Connect(function()
     autoTeleportCarActive = not autoTeleportCarActive
     updateToggleVisual(TeleportCarBtn, TeleportCarCircle, autoTeleportCarActive)
@@ -359,13 +353,11 @@ TeleportCarBtn.MouseButton1Click:Connect(function()
                                     local b = math.floor(col.B * 255 + 0.5)
                                     
                                     if selectedCarColor == "blau" then
-                                        -- Blaues Auto Erkennung (ca. 2, 99, 255)
                                         if math.abs(r - 2) <= 25 and math.abs(g - 99) <= 25 and math.abs(b - 255) <= 25 then
                                             isTargetCar = true
                                             break
                                         end
                                     elseif selectedCarColor == "rot" then
-                                        -- Rotes Auto Erkennung (ca. 255, 50, 50)
                                         if math.abs(r - 255) <= 35 and math.abs(g - 50) <= 35 and math.abs(b - 50) <= 35 then
                                             isTargetCar = true
                                             break
@@ -384,7 +376,7 @@ TeleportCarBtn.MouseButton1Click:Connect(function()
                     end
                     
                     if #targetCars == 0 then
-                        Footer.Text = "Status: Keine " .. selectedCarColor .."en Autos da (Warte...)"
+                        Footer.Text = "Status: Keine " .. selectedCarColor .."en Autos da..."
                         visitedCars = {}
                         task.wait(1.5)
                     else
@@ -395,8 +387,7 @@ TeleportCarBtn.MouseButton1Click:Connect(function()
                             smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
                             task.wait(0.05)
                             pressKey(Enum.KeyCode.E)
-                            local actionEvent = getActionEvent()
-                            if actionEvent then pcall(function() actionEvent:FireServer("Collect", 1321) end) end
+                            if ActionEvent then pcall(function() ActionEvent:FireServer("Collect", 1321) end) end
                             task.wait(0.35)
                         end
                     end
