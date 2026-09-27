@@ -8,15 +8,21 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Exakter direkter Zugriff auf das Event über deine Liste
-local ParkingGame = ReplicatedStorage:WaitForChild("ParkingGame")
-local ActionEvent = ParkingGame:WaitForChild("Action")
-
-print("ParkingGame UI geladen. Event gefunden:", ActionEvent ~= nil)
-
--- Altes GUI löschen falls vorhanden
+-- Altes GUI sofort löschen
 if CoreGui:FindFirstChild("ParkingGameUI") then
 	CoreGui.ParkingGameUI:Destroy()
+end
+
+-- Sicherer Zugriff mit Fallback, falls das Spiel den Ordner versteckt
+local ParkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
+local ActionEvent = ParkingGame and ParkingGame:FindFirstChild("Action")
+
+if not ActionEvent then
+    warn("[ParkingHub] Warnung: Action Event nicht direkt gefunden, versuche zu warten...")
+    pcall(function()
+        ParkingGame = ReplicatedStorage:WaitForChild("ParkingGame", 3)
+        ActionEvent = ParkingGame and ParkingGame:WaitForChild("Action", 3)
+    end)
 end
 
 -- Main ScreenGui
@@ -35,11 +41,11 @@ pcall(function()
 end)
 ScreenGui.Parent = CoreGui
 
--- Main Frame
+-- Main Frame (Höhe auf 520 erhöht, damit alles garantiert reinpasst)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 480)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -240)
+MainFrame.Size = UDim2.new(0, 380, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -107,7 +113,7 @@ end)
 
 -- Container für Elemente
 local ContainerFrame = Instance.new("Frame")
-ContainerFrame.Size = UDim2.new(1, -40, 1, -110)
+ContainerFrame.Size = UDim2.new(1, -40, 1, -100)
 ContainerFrame.Position = UDim2.new(0, 20, 0, 60)
 ContainerFrame.BackgroundTransparency = 1
 ContainerFrame.Parent = MainFrame
@@ -217,7 +223,7 @@ local function createToggleRow(labelText, defaultState)
     return ToggleBg, ToggleCircle
 end
 
--- Alle Toggles erstellen
+-- ALLE 4 Toggles sauber nacheinander erstellen
 local CollectToggleBtn, CollectCircle = createToggleRow("Auto-Collect (1321)", false)
 local SearchToggleBtn, SearchCircle = createToggleRow("Auto-Search Event", false)
 local TeleportCarBtn, TeleportCarCircle = createToggleRow("Fly Car Farm + E", false)
@@ -226,7 +232,7 @@ local TeleportValuablesBtn, TeleportValuablesCircle = createToggleRow("Fly Valua
 -- Footer Status
 local Footer = Instance.new("TextLabel")
 Footer.Size = UDim2.new(1, -40, 0, 25)
-Footer.Position = UDim2.new(0, 20, 1, -35)
+Footer.Position = UDim2.new(0, 20, 1, -30)
 Footer.Text = "Status: Bereit"
 Footer.TextColor3 = Color3.fromRGB(0, 255, 140)
 Footer.TextSize = 12
@@ -278,7 +284,7 @@ CollectToggleBtn.MouseButton1Click:Connect(function()
     if autoCollectActive then
         collectThread = task.spawn(function()
             while autoCollectActive do
-                pcall(function() ActionEvent:FireServer("Collect", 1321) end)
+                if ActionEvent then pcall(function() ActionEvent:FireServer("Collect", 1321) end) end
                 task.wait(0.1)
             end
         end)
@@ -295,7 +301,7 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     if autoSearchActive then
         searchThread = task.spawn(function()
             while autoSearchActive do
-                pcall(function() ActionEvent:FireServer("Search") end)
+                if ActionEvent then pcall(function() ActionEvent:FireServer("Search") end) end
                 task.wait(0.4)
             end
         end)
@@ -364,7 +370,7 @@ TeleportCarBtn.MouseButton1Click:Connect(function()
                             smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
                             task.wait(0.05)
                             pressKey(Enum.KeyCode.E)
-                            pcall(function() ActionEvent:FireServer("Collect", 1321) end)
+                            if ActionEvent then pcall(function() ActionEvent:FireServer("Collect", 1321) end) end
                             task.wait(0.35)
                         end
                     end
