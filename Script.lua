@@ -275,7 +275,7 @@ local function createToggle(name, defaultState, callback)
 	local state = defaultState
 	btn.MouseButton1Click:Connect(function()
 		state = not state
-        local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+		local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
 		local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
 		
 		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
@@ -462,28 +462,35 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Auto Claim TimeGifts (Robuster Loop für alle 12 Geschenke)
+-- Auto Claim TimeGifts (Sucht direkt in der PlayerGui nach den Geschenk-Buttons 1 bis 12)
 local autoTimeGiftActive = false
-createToggle("Auto Claim TimeGifts (1-12)", false, function(enabled)
+createToggle("Auto Claim TimeGifts (PlayerGui)", false, function(enabled)
 	autoTimeGiftActive = enabled
 	if autoTimeGiftActive then
 		task.spawn(function()
 			while autoTimeGiftActive do
 				pcall(function()
-					local event = ReplicatedStorage:FindFirstChild("Recv")
-					if event then
-						-- Geht alle 12 Geschenke einzeln durch und fängt Fehler ab, 
-						-- falls ein Timer noch nicht abgelaufen ist.
-						for i = 1, 12 do
-							if not autoTimeGiftActive then break end
-							pcall(function()
-								event:InvokeServer("TimeGift", tostring(i))
-							end)
-							task.wait(0.1)
+					for _, gui in ipairs(playerGui:GetDescendants()) do
+						if not autoTimeGiftActive then break end
+						
+						local nameLower = string.lower(gui.Name)
+						if (string.find(nameLower, "gift") or string.find(nameLower, "time") or string.find(nameLower, "reward")) and (gui:IsA("TextButton") or gui:IsA("ImageButton")) then
+							for i = 1, 12 do
+								if string.find(nameLower, tostring(i)) then
+									if gui.AbsoluteSize.X > 0 then
+										for _, conn in ipairs(getconnections(gui.MouseButton1Click)) do
+											conn:Fire()
+										end
+										for _, conn in ipairs(getconnections(gui.Activated)) do
+											conn:Fire()
+										end
+									end
+								end
+							end
 						end
 					end
 				end)
-				task.wait(3) -- Wiederholt den Durchlauf alle 3 Sekunden
+				task.wait(5)
 			end
 		end)
 	end
