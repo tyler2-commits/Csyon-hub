@@ -4,6 +4,7 @@ local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -37,8 +38,8 @@ ScreenGui.Parent = CoreGui
 -- Main Frame
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 430)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -215)
+MainFrame.Size = UDim2.new(0, 380, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -190, 0.5, -240)
 MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -216,8 +217,11 @@ local function createToggleRow(labelText, defaultState)
     return ToggleBg, ToggleCircle
 end
 
+-- Alle Toggles erstellen
 local CollectToggleBtn, CollectCircle = createToggleRow("Auto-Collect (1321)", false)
 local SearchToggleBtn, SearchCircle = createToggleRow("Auto-Search Event", false)
+local TeleportCarBtn, TeleportCarCircle = createToggleRow("Fly Car Farm + E", false)
+local TeleportValuablesBtn, TeleportValuablesCircle = createToggleRow("Fly Valuables + F", false)
 
 -- Footer Status
 local Footer = Instance.new("TextLabel")
@@ -231,40 +235,197 @@ Footer.BackgroundTransparency = 1
 Footer.TextXAlignment = Enum.TextXAlignment.Left
 Footer.Parent = MainFrame
 
--- Logik
+-- Logik Variablen
 local autoCollectActive = false
 local autoSearchActive = false
+local autoTeleportCarActive = false
+local autoTeleportValuablesActive = false
 
+local collectThread = nil
+local searchThread = nil
+local teleportCarThread = nil
+local teleportValuablesThread = nil
+
+local visitedCars = {}
+
+local function pressKey(keyCode)
+    pcall(function()
+        VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+        task.wait(0.03)
+        VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+    end)
+end
+
+local function smoothFlyTo(rootPart, targetCFrame, duration)
+    pcall(function()
+        local tweenInfo = TweenInfo.new(duration or 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(rootPart, tweenInfo, {CFrame = targetCFrame + Vector3.new(0, 4, 0)})
+        tween:Play()
+        tween.Completed:Wait()
+    end)
+end
+
+local function updateVisual(btn, circle, state)
+    circle.Position = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    btn.BackgroundColor3 = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+end
+
+-- 1. Auto-Collect
 CollectToggleBtn.MouseButton1Click:Connect(function()
     autoCollectActive = not autoCollectActive
-    CollectCircle.Position = autoCollectActive and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-    CollectToggleBtn.BackgroundColor3 = autoCollectActive and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+    updateVisual(CollectToggleBtn, CollectCircle, autoCollectActive)
 
     if autoCollectActive then
-        task.spawn(function()
+        collectThread = task.spawn(function()
             while autoCollectActive do
-                pcall(function()
-                    ActionEvent:FireServer("Collect", 1321)
-                end)
+                pcall(function() ActionEvent:FireServer("Collect", 1321) end)
                 task.wait(0.1)
             end
         end)
+    else
+        if collectThread then task.cancel(collectThread); collectThread = nil end
     end
 end)
 
+-- 2. Auto-Search
 SearchToggleBtn.MouseButton1Click:Connect(function()
     autoSearchActive = not autoSearchActive
-    SearchCircle.Position = autoSearchActive and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-    SearchToggleBtn.BackgroundColor3 = autoSearchActive and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+    updateVisual(SearchToggleBtn, SearchCircle, autoSearchActive)
 
     if autoSearchActive then
-        task.spawn(function()
+        searchThread = task.spawn(function()
             while autoSearchActive do
-                pcall(function()
-                    ActionEvent:FireServer("Search")
-                end)
+                pcall(function() ActionEvent:FireServer("Search") end)
                 task.wait(0.4)
             end
         end)
+    else
+        if searchThread then task.cancel(searchThread); searchThread = nil end
+    end
+end)
+
+-- 3. Auto Car Farm
+TeleportCarBtn.MouseButton1Click:Connect(function()
+    autoTeleportCarActive = not autoTeleportCarActive
+    updateVisual(TeleportCarBtn, TeleportCarCircle, autoTeleportCarActive)
+
+    if autoTeleportCarActive then
+        teleportCarThread = task.spawn(function()
+            while autoTeleportCarActive do
+                local character = LocalPlayer.Character
+                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                
+                if rootPart then
+                    Footer.Text = "Status: Suche " .. selectedCarColor .."e Autos..."
+                    local targetCars = {}
+                    
+                    for _, obj in ipairs(Workspace:GetDescendants()) do
+                        if obj:IsA("Model") then
+                            local isTargetCar = false
+                            for _, part in ipairs(obj:GetDescendants()) do
+                                if part:IsA("BasePart") then
+                                    local col = part.Color
+                                    local r = math.floor(col.R * 255 + 0.5)
+                                    local g = math.floor(col.G * 255 + 0.5)
+                                    local b = math.floor(col.B * 255 + 0.5)
+                                    
+                                    if selectedCarColor == "blau" then
+                                        if math.abs(r - 2) <= 25 and math.abs(g - 99) <= 25 and math.abs(b - 255) <= 25 then
+                                            isTargetCar = true
+                                            break
+                                        end
+                                    elseif selectedCarColor == "rot" then
+                                        if math.abs(r - 255) <= 35 and math.abs(g - 50) <= 35 and math.abs(b - 50) <= 35 then
+                                            isTargetCar = true
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                            
+                            if isTargetCar and not visitedCars[obj] then
+                                local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                                if primaryPart then
+                                    table.insert(targetCars, {model = obj, part = primaryPart})
+                                end
+                            end
+                        end
+                    end
+                    
+                    if #targetCars == 0 then
+                        Footer.Text = "Status: Keine " .. selectedCarColor .."en Autos da..."
+                        visitedCars = {}
+                        task.wait(1.5)
+                    else
+                        Footer.Text = "Status: " .. #targetCars .. " " .. selectedCarColor .."e Autos im Anflug!"
+                        for _, carInfo in ipairs(targetCars) do
+                            if not autoTeleportCarActive then break end
+                            visitedCars[carInfo.model] = true
+                            smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
+                            task.wait(0.05)
+                            pressKey(Enum.KeyCode.E)
+                            pcall(function() ActionEvent:FireServer("Collect", 1321) end)
+                            task.wait(0.35)
+                        end
+                    end
+                else
+                    Footer.Text = "Status: Kein Charakter!"
+                end
+                task.wait(0.5)
+            end
+        end)
+    else
+        Footer.Text = "Status: Bereit"
+        if teleportCarThread then task.cancel(teleportCarThread); teleportCarThread = nil end
+    end
+end)
+
+-- 4. Valuables
+TeleportValuablesBtn.MouseButton1Click:Connect(function()
+    autoTeleportValuablesActive = not autoTeleportValuablesActive
+    updateVisual(TeleportValuablesBtn, TeleportValuablesCircle, autoTeleportValuablesActive)
+
+    if autoTeleportValuablesActive then
+        teleportValuablesThread = task.spawn(function()
+            while autoTeleportValuablesActive do
+                local character = LocalPlayer.Character
+                local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                
+                if rootPart then
+                    Footer.Text = "Status: Suche Valuables..."
+                    local valuables = {}
+                    
+                    for _, obj in ipairs(Workspace:GetDescendants()) do
+                        local nameLower = obj.Name:lower()
+                        if nameLower:find("valuable") or nameLower:find("coin") or nameLower:find("loot") or nameLower:find("item") or nameLower:find("pickup") then
+                            local part = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+                            if part and not table.find(valuables, part) then
+                                table.insert(valuables, part)
+                            end
+                        end
+                    end
+                    
+                    if #valuables == 0 then
+                        Footer.Text = "Status: Keine Valuables gefunden..."
+                        task.wait(1)
+                    else
+                        Footer.Text = "Status: " .. #valuables .. " Valuables gefunden!"
+                        for _, valuablePart in ipairs(valuables) do
+                            if not autoTeleportValuablesActive then break end
+                            smoothFlyTo(rootPart, valuablePart.CFrame, 0.25)
+                            task.wait(0.05)
+                            pressKey(Enum.KeyCode.F)
+                            task.wait(0.25)
+                        end
+                    end
+                else
+                    Footer.Text = "Status: Kein Charakter!"
+                end
+                task.wait(0.5)
+            end
+        end)
+    else
+        Footer.Text = "Status: Bereit"
+        if teleportValuablesThread then task.cancel(teleportValuablesThread); teleportValuablesThread = nil end
     end
 end)
