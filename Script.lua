@@ -29,10 +29,10 @@ local winLocations = {
 	"ObbyTower",
 	"RedTower",
 	"Walls",
-	"World1", "World2", "World3", "World4", "World5",
-	"World6", "World7", "World8", "World9", "World10",
-	"World11", "World12", "World13", "World14", "World15",
-	"World16", "World17", "World18", "World19"
+	"Earth", "Moon", "Lava", "Ice", "Flower",
+	"Snow", "Dark", "Void", "Desert", "Forest",
+	"Candy", "Steampunk", "Beach", "Heaven", "Hell",
+	"Cyber", "Galaxy", "Crystal", "Rainbow"
 }
 
 -- Altes GUI löschen falls vorhanden
