@@ -11,11 +11,11 @@ local queueTeleport = queue_on_teleport or (syn and syn.queue_on_teleport)
 
 if queueTeleport then
 	queueTeleport([[
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Csyon-Hub-Loader.lua"))()
 	]])
 end
 
--- Unterstützte Spiele (mit dem korrekten Link)
+-- Unterstützte Spiele
 local supportedGames = {
 	{
 		Id = 140317247681516, -- +1 Jump Clicker
@@ -194,7 +194,7 @@ for i, gameData in ipairs(supportedGames) do
 	loadBtn.TextColor3 = isCurrentGame and Color3.fromRGB(12, 12, 18) or Color3.fromRGB(100, 100, 120)
 	loadBtn.TextSize = 11
 	loadBtn.Font = Enum.Font.GothamBold
-    loadBtn.Parent = gameCard
+	loadBtn.Parent = gameCard
 
 	local btnCorner = Instance.new("UICorner")
 	btnCorner.CornerRadius = UDim.new(0, 6)
