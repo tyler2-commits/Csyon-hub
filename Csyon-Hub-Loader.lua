@@ -6,15 +6,6 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local gameId = game.PlaceId
 
--- Queue on Teleport einrichten
-local queueTeleport = queue_on_teleport or (syn and syn.queue_on_teleport)
-
-if queueTeleport then
-	queueTeleport([[
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Csyon-Hub-Loader.lua"))()
-	]])
-end
-
 -- Unterstützte Spiele
 local supportedGames = {
 	{
@@ -24,13 +15,13 @@ local supportedGames = {
 	},
 	{
 		Id = 92630121427800, -- Where Did I Park? 🚗
-		Name = "Where Did I Park? 🚗",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua"
+		Name = "Soon",
+		ScriptUrl = ""
 	},
 	{
 		Id = 1122334455, -- Platzhalter für später
-		Name = "Spiel Nummer 3",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/DeinDrittesSkript"
+		Name = "Soon",
+		ScriptUrl = ""
 	}
 }
 
