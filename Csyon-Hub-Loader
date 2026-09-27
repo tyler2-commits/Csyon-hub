@@ -9,19 +9,19 @@ local gameId = game.PlaceId
 -- Trage hier deine 3 unterstützten Spiele ein (PlaceId, Name und Raw-URL)
 local supportedGames = {
 	{
-		Id = 140317247681516, -- Erste Spiel-ID (Anpassen!)
+		Id = 140317247681516, -- Erste Spiel-ID (+1 Jump Clicker)
 		Name = "+1 Jump Clicker",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"))()
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"
 	},
 	{
-		Id = 83867173651969, -- Zweite Spiel-ID (Anpassen!)
+		Id = 83867173651969, -- Zweite Spiel-ID (Where Did I Park?)
 		Name = "Where Did I Park? 🚗",
-		ScriptUrl = "loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"))()
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"
 	},
 	{
-		Id = 1122334455, -- Dritte Spiel-ID (Anpassen!)
+		Id = 1122334455, -- Dritte Spiel-ID (Platzhalter für später)
 		Name = "Spiel Nummer 3",
-		ScriptUrl = "DEINE_DRITTE_URL_HIER"
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/DeinDrittesSkript"
 	}
 }
 
@@ -56,7 +56,7 @@ mainStroke.Transparency = 0.5
 mainStroke.Thickness = 1.5
 mainStroke.Parent = mainFrame
 
--- Öffnungs-Animation beim Start (Größer gemacht für die 3 Felder)
+-- Öffnungs-Animation beim Start
 TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 	Size = UDim2.new(0, 400, 0, 310),
 	Position = UDim2.new(0.5, -200, 0.5, -155)
