@@ -6,16 +6,16 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local gameId = game.PlaceId
 
--- Queue on Teleport einrichten, damit das Skript nach einem Serverwechsel/Teleport weiterlebt
+-- Queue on Teleport einrichten
 local queueTeleport = queue_on_teleport or (syn and syn.queue_on_teleport)
 
 if queueTeleport then
 	queueTeleport([[
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua"))()
 	]])
 end
 
--- Trage hier deine unterstützten Spiele ein (mit der echten PlaceId)
+-- Unterstützte Spiele (mit dem korrekten Link)
 local supportedGames = {
 	{
 		Id = 140317247681516, -- +1 Jump Clicker
@@ -23,12 +23,12 @@ local supportedGames = {
 		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"
 	},
 	{
-		Id = 92630121427800, -- Deine echte ID von "Where Did I Park? 🚗"
+		Id = 92630121427800, -- Where Did I Park? 🚗
 		Name = "Where Did I Park? 🚗",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee%20game.lua"
 	},
 	{
-		Id = 1122334455, -- Dritte Spiel-ID (Platzhalter für später)
+		Id = 1122334455, -- Platzhalter für später
 		Name = "Spiel Nummer 3",
 		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/DeinDrittesSkript"
 	}
@@ -46,7 +46,7 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = CoreGui
 
--- Main Container (Startet klein für die Öffnungs-Animation)
+-- Main Container
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 0, 0, 0)
 mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -65,13 +65,13 @@ mainStroke.Transparency = 0.5
 mainStroke.Thickness = 1.5
 mainStroke.Parent = mainFrame
 
--- Öffnungs-Animation beim Start
+-- Öffnungs-Animation
 TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 	Size = UDim2.new(0, 400, 0, 310),
 	Position = UDim2.new(0.5, -200, 0.5, -155)
 }):Play()
 
--- Top-Bar (Titel)
+-- Top-Bar
 local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 50)
 topBar.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
@@ -173,7 +173,7 @@ for i, gameData in ipairs(supportedGames) do
 	dotCorner.CornerRadius = UDim.new(1, 0)
 	dotCorner.Parent = statusDot
 
-	-- Spielname & ID Info
+	-- Spielname
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Size = UDim2.new(1, -140, 1, 0)
 	nameLabel.Position = UDim2.new(0, 32, 0, 0)
@@ -185,7 +185,7 @@ for i, gameData in ipairs(supportedGames) do
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	nameLabel.Parent = gameCard
 
-	-- Ausführen-Button pro Spiel
+	-- Laden-Button
 	local loadBtn = Instance.new("TextButton")
 	loadBtn.Size = UDim2.new(0, 90, 0, 30)
 	loadBtn.Position = UDim2.new(1, -98, 0.5, -15)
@@ -194,7 +194,7 @@ for i, gameData in ipairs(supportedGames) do
 	loadBtn.TextColor3 = isCurrentGame and Color3.fromRGB(12, 12, 18) or Color3.fromRGB(100, 100, 120)
 	loadBtn.TextSize = 11
 	loadBtn.Font = Enum.Font.GothamBold
-	loadBtn.Parent = gameCard
+    loadBtn.Parent = gameCard
 
 	local btnCorner = Instance.new("UICorner")
 	btnCorner.CornerRadius = UDim.new(0, 6)
@@ -212,7 +212,7 @@ for i, gameData in ipairs(supportedGames) do
 	end
 end
 
--- Unterer globaler Status
+-- Globaler Status unten
 local globalStatus = Instance.new("TextLabel")
 globalStatus.Size = UDim2.new(1, -40, 0, 30)
 globalStatus.Position = UDim2.new(0, 20, 1, -38)
