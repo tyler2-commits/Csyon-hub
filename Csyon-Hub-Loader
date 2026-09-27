@@ -11,12 +11,12 @@ local supportedGames = {
 	{
 		Id = 140317247681516, -- Erste Spiel-ID (Anpassen!)
 		Name = "+1 Jump Clicker",
-		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"))()
 	},
 	{
-		Id = 9876543210, -- Zweite Spiel-ID (Anpassen!)
-		Name = "Spiel Nummer 2",
-		ScriptUrl = "DEINE_ZWEITE_URL_HIER"
+		Id = 83867173651969, -- Zweite Spiel-ID (Anpassen!)
+		Name = "Where Did I Park? 🚗",
+		ScriptUrl = "loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"))()
 	},
 	{
 		Id = 1122334455, -- Dritte Spiel-ID (Anpassen!)
