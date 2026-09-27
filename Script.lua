@@ -211,13 +211,13 @@ closeBtn.MouseButton1Click:Connect(function()
 	tw.Completed:Connect(function() mainFrame.Visible = false end)
 end)
 
--- Scrolling Container für Features (CanvasSize erhöht für die neuen Toggles)
+-- Scrolling Container für Features
 local container = Instance.new("ScrollingFrame")
 container.Size = UDim2.new(1, -20, 1, -60)
 container.Position = UDim2.new(0, 10, 0, 52)
 container.BackgroundTransparency = 1
 container.BorderSizePixel = 0
-container.CanvasSize = UDim2.new(0, 0, 0, 620)
+container.CanvasSize = UDim2.new(0, 0, 0, 580)
 container.ScrollBarThickness = 3
 container.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 140)
 container.Parent = mainFrame
@@ -462,105 +462,22 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- 4. GEFİXTES: Auto Race (PvP / Normales Rennen)
-local autoRaceActive = false
-local raceConnection = nil
-createToggle("Auto Race (Event)", false, function(enabled)
-	autoRaceActive = enabled
-	if autoRaceActive then
+-- Auto Claim TimeGifts (mit deinem Cobalt-Code)
+local autoTimeGiftActive = false
+createToggle("Auto Claim TimeGifts", false, function(enabled)
+	autoTimeGiftActive = enabled
+	if autoTimeGiftActive then
 		task.spawn(function()
-			while autoRaceActive do
+			while autoTimeGiftActive do
 				pcall(function()
-					local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace") or ReplicatedStorage:FindFirstChild("JoinRace")
-					if promptEvent then
-						promptEvent:FireServer()
+					local event = ReplicatedStorage:FindFirstChild("Recv")
+					if event then
+						event:InvokeServer("TimeGift", "1")
 					end
 				end)
-				
-				-- Automatisch springen während des Rennens
-				if not raceConnection then
-					raceConnection = RunService.Heartbeat:Connect(function()
-						if not autoRaceActive then
-							if raceConnection then raceConnection:Disconnect() raceConnection = nil end
-							return
-						end
-						pcall(function()
-							local char = player.Character
-							if char and char:FindFirstChild("Humanoid") then
-								char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-							end
-						end)
-					end)
-				end
-				task.wait(1)
-			end
-			-- Sofort stoppen, wenn Toggle aus ist
-			if raceConnection then
-				raceConnection:Disconnect()
-				raceConnection = nil
+				task.wait(5) -- Versucht alle 5 Sekunden, das Geschenk einzulösen
 			end
 		end)
-	else
-		autoRaceActive = false
-		if raceConnection then
-			raceConnection:Disconnect()
-			raceConnection = nil
-		end
-	end
-end).Parent = container
-
--- 5. NEU: Auto NPC Race (Eigenes Toggle für NPC-Rennen)
-local autoNpcRaceActive = false
-local npcRaceConnection = nil
-createToggle("Auto NPC Race", false, function(enabled)
-	autoNpcRaceActive = enabled
-	if autoNpcRaceActive then
-		task.spawn(function()
-			while autoNpcRaceActive do
-				pcall(function()
-					-- Sucht im ReplicatedStorage nach Remote-Events die zu NPC-Races gehören
-					for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
-						if v:IsA("RemoteEvent") and (v.Name:lower():find("npc") or v.Name:lower():find("npcrace")) then
-							v:FireServer()
-						end
-					end
-					
-					-- Versucht zusätzlich, NPC-Race Events über Standardnamen anzusprechen
-					local npcEvent = ReplicatedStorage:FindFirstChild("NPCRaceEvent") or ReplicatedStorage:FindFirstChild("StartNPCRace")
-					if npcEvent then
-						npcEvent:FireServer()
-					end
-				end)
-				
-				-- Automatisches Springen für NPC Races
-				if not npcRaceConnection then
-					npcRaceConnection = RunService.Heartbeat:Connect(function()
-						if not autoNpcRaceActive then
-							if npcRaceConnection then npcRaceConnection:Disconnect() npcRaceConnection = nil end
-							return
-						end
-						pcall(function()
-							local char = player.Character
-							if char and char:FindFirstChild("Humanoid") then
-								char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-							end
-						end)
-					end)
-				end
-				task.wait(1)
-			end
-			-- Sofort stoppen, wenn Toggle aus ist
-			if npcRaceConnection then
-				npcRaceConnection:Disconnect()
-				npcRaceConnection = nil
-			end
-		end)
-	else
-		autoNpcRaceActive = false
-		if npcRaceConnection then
-			npcRaceConnection:Disconnect()
-			npcRaceConnection = nil
-		end
 	end
 end).Parent = container
 
