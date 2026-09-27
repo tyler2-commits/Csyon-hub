@@ -187,7 +187,7 @@ uiList.SortOrder = Enum.SortOrder.LayoutOrder
 uiList.Padding = UDim.new(0, 10)
 uiList.Parent = container
 
--- Toggle Generator mit sanften Hover- & Klick-Animationen
+-- Toggle Generator mit externer Update-Funktion
 local function createToggle(name, defaultState, callback)
 	local toggleFrame = Instance.new("Frame")
 	toggleFrame.Size = UDim2.new(1, 0, 0, 44)
@@ -243,13 +243,19 @@ local function createToggle(name, defaultState, callback)
 		callback(state)
 	end)
 	
-	return toggleFrame, function(newState)
-		state = newState
-		local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
-		local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
-		TweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Position = targetPos}):Play()
+	-- Funktion um den Toggle von außen (z.B. nach Rennende) zu deaktivieren
+	local function setState(newState)
+		if state ~= newState then
+			state = newState
+			local targetColor = state and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(45, 45, 55)
+			local targetPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+			TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
+			TweenService:Create(circle, TweenInfo.new(0.25, Enum.EasingStyle.Back), {Position = targetPos}):Play()
+			callback(state)
+		end
 	end
+	
+	return toggleFrame, setState
 end
 
 -- 1. Clicker
@@ -432,49 +438,49 @@ createToggle("Auto Rebirth", false, function(enabled)
 	end
 end).Parent = container
 
--- Auto Race (Joint automatisch beim Popup, springt, und stoppt nach dem Rennen)
+-- Fixiertes Auto Race (Joint automatisch, springt und schaltet sich danach ab)
 local autoRaceActive = false
 local raceToggleFrame, setRaceToggleState = createToggle("Auto Race", false, function(enabled)
 	autoRaceActive = enabled
-end)
-raceToggleFrame.Parent = container
-
-task.spawn(function()
-	local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace")
-	if promptEvent then
-		promptEvent.OnClientEvent:Connect(function()
-			if autoRaceActive then
-				-- 1. Dem Rennen beitreten
+	
+	if enabled then
+		task.spawn(function()
+			local promptEvent = ReplicatedStorage:FindFirstChild("PromptForRace")
+			if promptEvent then
+				-- Versuche dem Rennen beizutreten
 				pcall(function()
 					promptEvent:FireServer()
 				end)
-				
-				-- 2. Während des Rennens automatisch springen
-				local jumpConnection
-				jumpConnection = RunService.Heartbeat:Connect(function()
-					pcall(function()
-						local char = player.Character
-						if char and char:FindFirstChild("Humanoid") then
-							char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-						end
-					end)
+			end
+			
+			-- Automatisch springen, solange der Toggle an ist (während des Rennens)
+			local jumpConnection
+			jumpConnection = RunService.Heartbeat:Connect(function()
+				if not autoRaceActive then
+					jumpConnection:Disconnect()
+					return
+				end
+				pcall(function()
+					local char = player.Character
+					if char and char:FindFirstChild("Humanoid") then
+						char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+					end
 				end)
-				
-				-- 3. Warten, bis das Rennen vorbei ist (Erkennung über GUI / Status-Änderung oder Timer)
-				-- Wir prüfen z.B. ob ein Race-UI verschwindet oder nach einer festen Zeit von z.B. 30 Sekunden
-				task.wait(25) -- Passe diesen Wert an, falls das Rennen länger/kürzer dauert
-				
+			end)
+			
+			-- Nach 25 Sekunden ist das Rennen vorbei -> Toggle automatisch ausschalten
+			task.wait(25)
+			if autoRaceActive then
+				autoRaceActive = false
+				setRaceToggleState(false) -- Schaltet den Schalter optisch aus
 				if jumpConnection then
 					jumpConnection:Disconnect()
 				end
-				
-				-- 4. Schalte den Auto Race Schalter optisch und logisch aus
-				autoRaceActive = false
-				setRaceToggleState(false)
 			end
 		end)
 	end
 end)
+raceToggleFrame.Parent = container
 
 -- Anti-AFK Schutz
 createToggle("Anti-AFK Schutz", false, function(enabled)
