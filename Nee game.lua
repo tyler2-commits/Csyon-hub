@@ -61,8 +61,8 @@ UIStroke.Parent = MainFrame
 
 -- Öffnungs-Animation beim Start
 TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-	Size = UDim2.new(0, 380, 0, 390),
-	Position = UDim2.new(0.5, -190, 0.5, -195)
+	Size = UDim2.new(0, 380, 0, 450),
+	Position = UDim2.new(0.5, -190, 0.5, -225)
 }):Play()
 
 -- Top-Bar (Titel)
@@ -120,10 +120,10 @@ CloseButton.MouseButton1Click:Connect(function()
 	end)
 end)
 
--- Container für Toggles
+-- Container für Toggles & Menüs
 local ContainerFrame = Instance.new("Frame")
 ContainerFrame.Size = UDim2.new(1, -40, 1, -120)
-ContainerFrame.Position = UDim2.new(0, 20, 0, 65)
+ContainerFrame.Position = UDim2.new(0, 20, 0, 60)
 ContainerFrame.BackgroundTransparency = 1
 ContainerFrame.Parent = MainFrame
 
@@ -181,10 +181,61 @@ local function createToggleRow(labelText, defaultState)
     return ToggleBg, ToggleCircle
 end
 
+-- Farbauswahl-Zeile (Dropdown-artiger Umschalter für Blau / Rot)
+local ColorPickerFrame = Instance.new("Frame")
+ColorPickerFrame.Size = UDim2.new(1, 0, 0, 48)
+ColorPickerFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+ColorPickerFrame.BorderSizePixel = 0
+ColorPickerFrame.Parent = ContainerFrame
+
+local CPCorner = Instance.new("UICorner")
+CPCorner.CornerRadius = UDim.new(0, 10)
+CPCorner.Parent = ColorPickerFrame
+
+local CPLabel = Instance.new("TextLabel")
+CPLabel.Size = UDim2.new(1, -120, 1, 0)
+CPLabel.Position = UDim2.new(0, 15, 0, 0)
+CPLabel.Text = "Autofarm Farbe"
+CPLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+CPLabel.TextSize = 13
+CPLabel.Font = Enum.Font.GothamMedium
+CPLabel.TextXAlignment = Enum.TextXAlignment.Left
+CPLabel.BackgroundTransparency = 1
+CPLabel.Parent = ColorPickerFrame
+
+local ColorSwitchBtn = Instance.new("TextButton")
+ColorSwitchBtn.Size = UDim2.new(0, 95, 0, 28)
+ColorSwitchBtn.Position = UDim2.new(1, -105, 0.5, -14)
+ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255) -- Startet bei Blau
+ColorSwitchBtn.Text = "BLAU"
+ColorSwitchBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ColorSwitchBtn.TextSize = 12
+ColorSwitchBtn.Font = Enum.Font.GothamBold
+ColorSwitchBtn.Parent = ColorPickerFrame
+
+local CSB procedente = Instance.new("UICorner")
+CSB procedente.CornerRadius = UDim.new(0, 8)
+CSB procedente.Parent = ColorSwitchBtn
+
+-- Ausgewählte Farbe als Variable ("blau" oder "rot")
+local selectedCarColor = "blau"
+
+ColorSwitchBtn.MouseButton1Click:Connect(function()
+    if selectedCarColor == "blau" then
+        selectedCarColor = "rot"
+        ColorSwitchBtn.Text = "ROT"
+        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    else
+        selectedCarColor = "blau"
+        ColorSwitchBtn.Text = "BLAU"
+        ColorSwitchBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
+    end
+end)
+
 -- Toggles erstellen
 local CollectToggleBtn, CollectCircle = createToggleRow("Auto-Collect (1321)", false)
 local SearchToggleBtn, SearchCircle = createToggleRow("Auto-Search Event", false)
-local TeleportBlueCarBtn, TeleportBlueCarCircle = createToggleRow("Fly Blue Cars (2,99,255) + E", false)
+local TeleportCarBtn, TeleportCarCircle = createToggleRow("Fly Car Farm + E", false)
 local TeleportValuablesBtn, TeleportValuablesCircle = createToggleRow("Fly Valuables + F", false)
 
 -- Footer Status
@@ -206,12 +257,12 @@ Footer.Parent = MainFrame
 
 local autoCollectActive = false
 local autoSearchActive = false
-local autoTeleportBlueCarActive = false
+local autoTeleportCarActive = false
 local autoTeleportValuablesActive = false
 
 local collectThread = nil
 local searchThread = nil
-local teleportBlueCarThread = nil
+local teleportCarThread = nil
 local teleportValuablesThread = nil
 
 local visitedCars = {}
@@ -282,24 +333,24 @@ SearchToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 3. Blaue Autos
-TeleportBlueCarBtn.MouseButton1Click:Connect(function()
-    autoTeleportBlueCarActive = not autoTeleportBlueCarActive
-    updateToggleVisual(TeleportBlueCarBtn, TeleportBlueCarCircle, autoTeleportBlueCarActive)
+-- 3. Auto Car Farm (Blau oder Rot auswählbar)
+TeleportCarBtn.MouseButton1Click:Connect(function()
+    autoTeleportCarActive = not autoTeleportCarActive
+    updateToggleVisual(TeleportCarBtn, TeleportCarCircle, autoTeleportCarActive)
 
-    if autoTeleportBlueCarActive then
-        teleportBlueCarThread = task.spawn(function()
-            while autoTeleportBlueCarActive do
+    if autoTeleportCarActive then
+        teleportCarThread = task.spawn(function()
+            while autoTeleportCarActive do
                 local character = LocalPlayer.Character
                 local rootPart = character and character:FindFirstChild("HumanoidRootPart")
                 
                 if rootPart then
-                    Footer.Text = "Status: Suche blaue Autos..."
+                    Footer.Text = "Status: Suche " .. selectedCarColor .."e Autos..."
                     local targetCars = {}
                     
                     for _, obj in ipairs(Workspace:GetDescendants()) do
                         if obj:IsA("Model") then
-                            local isBlueCar = false
+                            local isTargetCar = false
                             for _, part in ipairs(obj:GetDescendants()) do
                                 if part:IsA("BasePart") then
                                     local col = part.Color
@@ -307,14 +358,23 @@ TeleportBlueCarBtn.MouseButton1Click:Connect(function()
                                     local g = math.floor(col.G * 255 + 0.5)
                                     local b = math.floor(col.B * 255 + 0.5)
                                     
-                                    if math.abs(r - 2) <= 25 and math.abs(g - 99) <= 25 and math.abs(b - 255) <= 25 then
-                                        isBlueCar = true
-                                        break
+                                    if selectedCarColor == "blau" then
+                                        -- Blaues Auto Erkennung (ca. 2, 99, 255)
+                                        if math.abs(r - 2) <= 25 and math.abs(g - 99) <= 25 and math.abs(b - 255) <= 25 then
+                                            isTargetCar = true
+                                            break
+                                        end
+                                    elseif selectedCarColor == "rot" then
+                                        -- Rotes Auto Erkennung (ca. 255, 50, 50)
+                                        if math.abs(r - 255) <= 35 and math.abs(g - 50) <= 35 and math.abs(b - 50) <= 35 then
+                                            isTargetCar = true
+                                            break
+                                        end
                                     end
                                 end
                             end
                             
-                            if isBlueCar and not visitedCars[obj] then
+                            if isTargetCar and not visitedCars[obj] then
                                 local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
                                 if primaryPart then
                                     table.insert(targetCars, {model = obj, part = primaryPart})
@@ -324,13 +384,13 @@ TeleportBlueCarBtn.MouseButton1Click:Connect(function()
                     end
                     
                     if #targetCars == 0 then
-                        Footer.Text = "Status: Keine blauen Autos da (Warte...)"
+                        Footer.Text = "Status: Keine " .. selectedCarColor .."en Autos da (Warte...)"
                         visitedCars = {}
                         task.wait(1.5)
                     else
-                        Footer.Text = "Status: " .. #targetCars .. " blaue Autos im Anflug!"
+                        Footer.Text = "Status: " .. #targetCars .. " " .. selectedCarColor .."e Autos im Anflug!"
                         for _, carInfo in ipairs(targetCars) do
-                            if not autoTeleportBlueCarActive then break end
+                            if not autoTeleportCarActive then break end
                             visitedCars[carInfo.model] = true
                             smoothFlyTo(rootPart, carInfo.part.CFrame, 0.25)
                             task.wait(0.05)
@@ -348,7 +408,7 @@ TeleportBlueCarBtn.MouseButton1Click:Connect(function()
         end)
     else
         Footer.Text = "Status: Bereit"
-        if teleportBlueCarThread then task.cancel(teleportBlueCarThread); teleportBlueCarThread = nil end
+        if teleportCarThread then task.cancel(teleportCarThread); teleportCarThread = nil end
     end
 end)
 
