@@ -2,9 +2,19 @@
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
 
 local player = Players.LocalPlayer
 local gameId = game.PlaceId
+
+-- Queue on Teleport einrichten, damit das Skript nach einem Serverwechsel/Teleport weiterlebt
+local queueTeleport = queue_on_teleport or (syn and syn.queue_on_teleport)
+
+if queueTeleport then
+	queueTeleport([[
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Nee"))()
+	]])
+end
 
 -- Trage hier deine 3 unterstützten Spiele ein (PlaceId, Name und Raw-URL)
 local supportedGames = {
