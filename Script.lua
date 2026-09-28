@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB (Mit Auto-Save & allen Features)
+--// CYSON HUB (Mit exakter Welten-Liste & Auto-Save)
 --// Mobile Friendly UI + Themes + UI Scaling + Auto-Layout
 --//====================================================
 
@@ -39,7 +39,7 @@ pcall(function()
 	rebirthEvent = ReplicatedStorage:WaitForChild("RebirthEvent", 2)
 end)
 
---// WELTEN / ZIELE LISTE
+--// WELTEN / ZIELE LISTE (Exakt nach Vorgabe)
 local winLocations = {
 	"ObbyTower",
 	"RedTower",
@@ -684,7 +684,7 @@ end)
 -- Sektion für Auto Win Teleport
 CreateSectionTitle(MainScriptTab, "Auto Win Teleport", "Wähle deine Zielwelt für den Auto-Teleport aus:", 4)
 
--- 3. Welten Dropdown für Teleport
+-- 3. Welten Dropdown für Teleport (Basierend auf der exakten winLocations Liste)
 local dropdownFrame = Instance.new("Frame")
 dropdownFrame.Size = UDim2.new(1, -5, 0, 45)
 dropdownFrame.BorderSizePixel = 0
@@ -773,7 +773,7 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 4. Auto Win Teleport Ausführen (Verbesserte Suche)
+-- 4. Auto Win Teleport Ausführen
 local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 6)
 local autoWinActive = false
 CreateToggle(winCard, function(enabled)
@@ -1107,4 +1107,4 @@ CloseButton.MouseButton1Click:Connect(function() MainFrame.Visible = false; Open
 OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenButton.Visible = false end)
 
 activatePlayer()
-print("CYSON HUB mit automatischem Layout erfolgreich geladen!")
+print("CYSON HUB mit exakter Welten-Liste erfolgreich geladen!")
