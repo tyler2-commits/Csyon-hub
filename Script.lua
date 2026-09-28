@@ -1,6 +1,6 @@
 --//====================================================
 --// CYSON HUB (Mit Auto-Save & allen Features)
---// Mobile Friendly UI + Themes + UI Scaling
+--// Mobile Friendly UI + Themes + UI Scaling + Auto-Layout
 --//====================================================
 
 --// SERVICES
@@ -308,10 +308,18 @@ local function CreateTab(name)
     tab.BackgroundTransparency = 1
     tab.BorderSizePixel = 0
     tab.ScrollBarThickness = 3
-    tab.CanvasSize = UDim2.new(0, 0, 0, 800)
+    tab.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    tab.CanvasSize = UDim2.new(0, 0, 0, 0)
     tab.Visible = false
     tab.Parent = ContentContainer
     BindTheme(tab, "ScrollBarImageColor3", "Accent")
+
+    -- Automatisches Layout für den gesamten Tab, damit Elemente sauber untereinander hängen
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Padding = UDim.new(0, 10)
+    listLayout.Parent = tab
+
     Tabs[name] = tab
     return tab
 end
@@ -386,11 +394,11 @@ CreateTabButton("Game Cheats", "⚡", 100, MainScriptTab)
 CreateTabButton("Settings", "⚙", 150, SettingsTab)
 
 --// UI HELPER FUNCTIONS
-local function CreateSectionTitle(parent, title, subtitle, yPos)
+local function CreateSectionTitle(parent, title, subtitle, layoutOrder)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, -5, 0, 50)
-    container.Position = UDim2.new(0, 0, 0, yPos)
     container.BackgroundTransparency = 1
+    container.LayoutOrder = layoutOrder or 0
     container.Parent = parent
 
     local titleLabel = Instance.new("TextLabel")
@@ -413,13 +421,15 @@ local function CreateSectionTitle(parent, title, subtitle, yPos)
     sub.TextXAlignment = Enum.TextXAlignment.Left
     sub.Parent = container
     BindTheme(sub, "TextColor3", "Muted")
+    
+    return container
 end
 
-local function CreateFeatureCard(parent, titleText, descText, y)
+local function CreateFeatureCard(parent, titleText, descText, layoutOrder)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -5, 0, 80)
-    card.Position = UDim2.new(0, 0, 0, y)
     card.BorderSizePixel = 0
+    card.LayoutOrder = layoutOrder or 0
     card.Parent = parent
     BindTheme(card, "BackgroundColor3", "Card")
 
@@ -523,10 +533,10 @@ end
 --// PLAYER TAB FEATURES
 --//====================================================
 
-CreateSectionTitle(PlayerTab, "Player Modifications", "Steuere Bewegungen und Anti-AFK", 10)
+CreateSectionTitle(PlayerTab, "Player Modifications", "Steuere Bewegungen und Anti-AFK", 1)
 
 -- Anti-AFK
-local afkCard = CreateFeatureCard(PlayerTab, "Anti-AFK Schutz", "Verhindert, dass du wegen Inaktivität gekickt wirst.", 65)
+local afkCard = CreateFeatureCard(PlayerTab, "Anti-AFK Schutz", "Verhindert, dass du wegen Inaktivität gekickt wirst.", 2)
 local antiAfkActive = false
 _, setAfk = CreateToggle(afkCard, function(enabled)
     antiAfkActive = enabled
@@ -544,7 +554,7 @@ end)
 setAfk(Settings.AntiAFK)
 
 -- WalkSpeed
-local speedCard = CreateFeatureCard(PlayerTab, "WalkSpeed", "Passe deine Gehgeschwindigkeit an.", 155)
+local speedCard = CreateFeatureCard(PlayerTab, "WalkSpeed", "Passe deine Gehgeschwindigkeit an.", 3)
 local speedInput = Instance.new("TextBox")
 speedInput.Size = UDim2.new(0, 65, 0, 30)
 speedInput.Position = UDim2.new(1, -78, 0.5, -15)
@@ -573,7 +583,7 @@ speedInput.FocusLost:Connect(function()
 end)
 
 -- Fly Mode
-local flyCard = CreateFeatureCard(PlayerTab, "Fly Mode", "Fliege frei mit WASD und Leertaste durch die Luft.", 245)
+local flyCard = CreateFeatureCard(PlayerTab, "Fly Mode", "Fliege frei mit WASD und Leertaste durch die Luft.", 4)
 local flying = false
 local bg, bv
 
@@ -634,10 +644,10 @@ setFly(Settings.Fly)
 --// GAME CHEATS TAB (Auto-Farm, Teleport, Spins, Rebirth)
 --//====================================================
 
-CreateSectionTitle(MainScriptTab, "Game Automation", "Automatisierte Skripte für das Spiel", 10)
+CreateSectionTitle(MainScriptTab, "Game Automation", "Automatisierte Skripte für das Spiel", 1)
 
 -- 1. Ultra Speed Clicker
-local clickCard = CreateFeatureCard(MainScriptTab, "Ultra Speed Clicker", "Erhöht automatisch deine Geschwindigkeit im Sekundentakt.", 65)
+local clickCard = CreateFeatureCard(MainScriptTab, "Ultra Speed Clicker", "Erhöht automatisch deine Geschwindigkeit im Sekundentakt.", 2)
 local autoFarmActive = false
 local farmConnection
 CreateToggle(clickCard, function(enabled)
@@ -652,7 +662,7 @@ CreateToggle(clickCard, function(enabled)
 end)
 
 -- 2. Auto Spin
-local spinCard = CreateFeatureCard(MainScriptTab, "Auto Claim / Free Spins", "Sammelt automatisch Gratis-Spins und Belohnungen ein.", 155)
+local spinCard = CreateFeatureCard(MainScriptTab, "Auto Claim / Free Spins", "Sammelt automatisch Gratis-Spins und Belohnungen ein.", 3)
 local autoSpinActive = false
 CreateToggle(spinCard, function(enabled)
     autoSpinActive = enabled
@@ -672,14 +682,15 @@ CreateToggle(spinCard, function(enabled)
     end
 end)
 
--- 3. Welten Dropdown für Teleport
-CreateSectionTitle(MainScriptTab, "Auto Win Teleport", "Wähle deine Zielwelt für den Auto-Teleport aus:", 245)
+-- Sektion für Auto Win Teleport
+CreateSectionTitle(MainScriptTab, "Auto Win Teleport", "Wähle deine Zielwelt für den Auto-Teleport aus:", 4)
 
+-- 3. Welten Dropdown für Teleport
 local dropdownFrame = Instance.new("Frame")
 dropdownFrame.Size = UDim2.new(1, -5, 0, 45)
-dropdownFrame.Position = UDim2.new(0, 0, 0, 300)
 dropdownFrame.BorderSizePixel = 0
 dropdownFrame.ClipsDescendants = true
+dropdownFrame.LayoutOrder = 5
 dropdownFrame.Parent = MainScriptTab
 BindTheme(dropdownFrame, "BackgroundColor3", "Card")
 
@@ -763,8 +774,8 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 4. Auto Win Teleport (Verbesserte Logik für Welten wie Earth, Moon etc.)
-local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 355)
+-- 4. Auto Win Teleport Ausführen
+local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 6)
 local autoWinActive = false
 CreateToggle(winCard, function(enabled)
     autoWinActive = enabled
@@ -779,7 +790,6 @@ CreateToggle(winCard, function(enabled)
                         targetObj = winsFolder:FindFirstChild(selectedWorld, true)
                     end
                     
-                    -- Falls nicht im Standard-Ordner, global im Workspace suchen
                     if not targetObj then
                         targetObj = workspace:FindFirstChild(selectedWorld, true)
                     end
@@ -809,7 +819,7 @@ CreateToggle(winCard, function(enabled)
 end)
 
 -- 5. Auto Rebirth
-local rebirthCard = CreateFeatureCard(MainScriptTab, "Auto Rebirth", "Führt automatisch Rebirths aus, sobald es möglich ist.", 445)
+local rebirthCard = CreateFeatureCard(MainScriptTab, "Auto Rebirth", "Führt automatisch Rebirths aus, sobald es möglich ist.", 7)
 local autoRebirthActive = false
 CreateToggle(rebirthCard, function(enabled)
     autoRebirthActive = enabled
@@ -831,7 +841,7 @@ CreateToggle(rebirthCard, function(enabled)
 end)
 
 -- 6. FPS Boost
-local fpsCard = CreateFeatureCard(MainScriptTab, "FPS Boost (Partikel aus)", "Schaltet Partikel und Effekte ab, um die FPS zu erhöhen.", 535)
+local fpsCard = CreateFeatureCard(MainScriptTab, "FPS Boost (Partikel aus)", "Schaltet Partikel und Effekte ab, um die FPS zu erhöhen.", 8)
 CreateToggle(fpsCard, function(enabled)
     for _, v in ipairs(workspace:GetDescendants()) do
         if v:IsA("ParticleEmitter") or v:IsA("Fire") or v:IsA("Sparkles") then
@@ -844,13 +854,13 @@ end)
 --// SETTINGS TAB (Themes & UI-Größe)
 --//====================================================
 
-CreateSectionTitle(SettingsTab, "Settings & Anpassung", "Wähle Themes und UI-Größen", 10)
+CreateSectionTitle(SettingsTab, "Settings & Anpassung", "Wähle Themes und UI-Größen", 1)
 
 -- Themes
 local themeCard = Instance.new("Frame")
 themeCard.Size = UDim2.new(1, -5, 0, 190)
-themeCard.Position = UDim2.new(0, 0, 0, 65)
 themeCard.BorderSizePixel = 0
+themeCard.LayoutOrder = 2
 themeCard.Parent = SettingsTab
 BindTheme(themeCard, "BackgroundColor3", "Card")
 local themeCorner = Instance.new("UICorner")
@@ -896,8 +906,8 @@ ThemeButtons["Gold"] = CreateThemeButton("GOLD", 246, 98)
 -- UI Size
 local sizeCard = Instance.new("Frame")
 sizeCard.Size = UDim2.new(1, -5, 0, 190)
-sizeCard.Position = UDim2.new(0, 0, 0, 270)
 sizeCard.BorderSizePixel = 0
+sizeCard.LayoutOrder = 3
 sizeCard.Parent = SettingsTab
 BindTheme(sizeCard, "BackgroundColor3", "Card")
 local sizeCorner = Instance.new("UICorner")
@@ -1071,4 +1081,4 @@ CloseButton.MouseButton1Click:Connect(function() MainFrame.Visible = false; Open
 OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenButton.Visible = false end)
 
 activatePlayer()
-print("CYSON HUB mit allen Features erfolgreich geladen!")
+print("CYSON HUB mit automatischem Layout erfolgreich geladen!")
