@@ -95,8 +95,7 @@ local Settings = {
     Fly = false,
     WalkSpeed = 16,
     Theme = "Purple",
-    UISize = "MOBILE",
-    AutoBuyBest = false -- Auto Buy Setting hinzugefügt
+    UISize = "MOBILE"
 }
 
 local function SaveConfig()
@@ -1195,145 +1194,12 @@ CreateToggle(
     end
 )
 
---//====================================================
---// AUTO BUY BEST ITEMS INTEGRATION
---//====================================================
-
-local autoBuyCard = CreateFeatureCard(
-    FeaturesTab,
-    "Auto Buy Best Items",
-    "Kauft automatisch die verfügbaren besseren Trail-, Aura- und Skin-Upgrades.",
-    4
-)
-
-local autoBuyActive = false
-local autoBuyRunning = false
-
--- Inventory purchase RemoteFunction
-local inventoryEvents = ReplicatedStorage:FindFirstChild("InventoryEvents")
-local inventoryAction = nil
-
-if inventoryEvents then
-    inventoryAction = inventoryEvents:FindFirstChild("Action")
-end
-
--- Die gewünschten Upgrades.
--- Reihenfolge: Trail -> Aura -> Skin
-local BestItems = {
-    {
-        Category = "Trail",
-        Action = "BuyWins",
-        Item = "Ash"
-    },
-
-    {
-        Category = "Aura",
-        Action = "BuyWins",
-        Item = "Dust"
-    },
-
-    {
-        Category = "Skin",
-        Action = "BuyWins",
-        Item = "Bronze"
-    }
-}
-
-local function TryBuyBestItems()
-
-    if not inventoryAction then
-        inventoryEvents =
-            ReplicatedStorage:FindFirstChild("InventoryEvents")
-
-        if inventoryEvents then
-            inventoryAction =
-                inventoryEvents:FindFirstChild("Action")
-        end
-    end
-
-    if not inventoryAction then
-        return
-    end
-
-    for _, item in ipairs(BestItems) do
-
-        if not autoBuyActive then
-            break
-        end
-
-        pcall(function()
-
-            inventoryAction:InvokeServer(
-                item.Category,
-                item.Action,
-                item.Item,
-                nil
-            )
-
-        end)
-
-        task.wait(0.35)
-    end
-end
-
-local function StartAutoBuy()
-
-    if autoBuyRunning then
-        return
-    end
-
-    autoBuyRunning = true
-
-    task.spawn(function()
-
-        while autoBuyActive do
-
-            TryBuyBestItems()
-
-            -- Nicht dauerhaft das Remote spammen
-            task.wait(3)
-
-        end
-
-        autoBuyRunning = false
-
-    end)
-end
-
-local _, setAutoBuy = CreateToggle(
-    autoBuyCard,
-    function(enabled)
-
-        autoBuyActive = enabled
-        Settings.AutoBuyBest = enabled
-
-        SaveConfig()
-
-        if enabled then
-            StartAutoBuy()
-        end
-
-    end
-)
-
--- Auto Buy beim Start wiederherstellen
-task.defer(function()
-
-    if Settings.AutoBuyBest then
-
-        task.wait(0.5)
-        setAutoBuy(true)
-
-    end
-
-end)
-
 -- Auto Win section
 CreateSectionTitle(
     FeaturesTab,
     "Auto Win Teleport",
     "Wähle eine Zielwelt für den Teleport.",
-    5
+    4
 )
 
 --//====================================================
@@ -1344,7 +1210,7 @@ local dropdownFrame = Instance.new("Frame")
 dropdownFrame.Size = UDim2.new(1, -4, 0, 48)
 dropdownFrame.BorderSizePixel = 0
 dropdownFrame.ClipsDescendants = true
-dropdownFrame.LayoutOrder = 6
+dropdownFrame.LayoutOrder = 5
 dropdownFrame.Parent = FeaturesTab
 
 BindTheme(dropdownFrame, "BackgroundColor3", "Card")
@@ -1532,7 +1398,7 @@ local winCard = CreateFeatureCard(
     FeaturesTab,
     "Auto Win Teleport",
     "Teleportiert dich automatisch zur gewählten Welt.",
-    7
+    6
 )
 
 local autoWinActive = false
@@ -1694,7 +1560,7 @@ local rebirthCard = CreateFeatureCard(
     FeaturesTab,
     "Auto Rebirth",
     "Führt automatisch Rebirths aus, sobald verfügbar.",
-    8
+    7
 )
 
 local autoRebirthActive = false
@@ -1744,7 +1610,7 @@ local fpsCard = CreateFeatureCard(
     FeaturesTab,
     "FPS Boost",
     "Deaktiviert Partikel, Feuer und Sparkles.",
-    9
+    8
 )
 
 CreateToggle(
