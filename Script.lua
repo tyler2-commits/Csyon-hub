@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB (Mit gefixtem Präzisions-Win-Teleport)
+--// CYSON HUB (Optimierte & Fehlerfreie Version)
 --// Mobile Friendly UI + Themes + UI Scaling + Auto-Layout
 --//====================================================
 
@@ -23,7 +23,7 @@ if CoreGui:FindFirstChild("NeonHubUI") then
     CoreGui.NeonHubUI:Destroy()
 end
 
---// EVENT-REFERENZEN (Speed, Spin, Rebirth)
+--// EVENT-REFERENZEN
 local increaseSpeedEvent = ReplicatedStorage:FindFirstChild("IncreaseSpeed")
 
 local spinEvent = nil
@@ -39,7 +39,7 @@ pcall(function()
 	rebirthEvent = ReplicatedStorage:WaitForChild("RebirthEvent", 2)
 end)
 
---// WELTEN / ZIELE LISTE (Exakt nach Vorgabe)
+--// WELTEN / ZIELE LISTE
 local winLocations = {
 	"ObbyTower",
 	"RedTower",
@@ -66,25 +66,22 @@ local Settings = {
 
 local function SaveConfig()
     if writefile then
-        local success, encoded = pcall(function()
-            return HttpService:JSONEncode(Settings)
+        pcall(function()
+            writefile(ConfigName, HttpService:JSONEncode(Settings))
         end)
-        if success then
-            writefile(ConfigName, encoded)
-        end
     end
 end
 
 local function LoadConfig()
     if isfile and isfile(ConfigName) and readfile then
-        local success, decoded = pcall(function()
-            return HttpService:JSONDecode(readfile(ConfigName))
-        end)
-        if success and type(decoded) == "table" then
-            for k, v in pairs(decoded) do
-                Settings[k] = v
+        pcall(function()
+            local decoded = HttpService:JSONDecode(readfile(ConfigName))
+            if type(decoded) == "table" then
+                for k, v in pairs(decoded) do
+                    Settings[k] = v
+                end
             end
-        end
+        end)
     end
 end
 
@@ -107,8 +104,7 @@ local CurrentTheme = "Purple"
 local Colors = {}
 
 local function LoadTheme(themeName)
-    local theme = Themes[themeName]
-    if not theme then return end
+    local theme = Themes[themeName] or Themes["Purple"]
     for key, value in pairs(theme) do
         Colors[key] = value
     end
@@ -129,10 +125,7 @@ local ToggleObjects = {}
 local TabObjects = {}
 local OptionButtons = {}
 
---//====================================================
 --// SCREEN GUI
---//====================================================
-
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CYSONHubUI"
 ScreenGui.ResetOnSpawn = false
@@ -168,10 +161,7 @@ Glow.Transparency = 0.82
 Glow.Parent = MainFrame
 BindTheme(Glow, "Color", "Secondary")
 
---//====================================================
---// TOP BAR & STATUS
---//====================================================
-
+--// TOP BAR
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, 0, 0, 68)
 TopBar.BorderSizePixel = 0
@@ -272,10 +262,7 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 10)
 CloseCorner.Parent = CloseButton
 
---//====================================================
 --// SIDEBAR & TABS
---//====================================================
-
 local Sidebar = Instance.new("Frame")
 Sidebar.Size = UDim2.new(0, 175, 1, -68)
 Sidebar.Position = UDim2.new(0, 0, 0, 68)
@@ -392,7 +379,7 @@ local _, activatePlayer = CreateTabButton("Player", "♙", 50, PlayerTab)
 CreateTabButton("Game Cheats", "⚡", 100, MainScriptTab)
 CreateTabButton("Settings", "⚙", 150, SettingsTab)
 
---// UI HELPER FUNCTIONS
+-- UI HELPERS
 local function CreateSectionTitle(parent, title, subtitle, layoutOrder)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, -5, 0, 50)
@@ -528,16 +515,12 @@ local function CreateToggle(parent, callback)
     return button, Set
 end
 
---//====================================================
 --// PLAYER TAB FEATURES
---//====================================================
-
 CreateSectionTitle(PlayerTab, "Player Modifications", "Steuere Bewegungen und Anti-AFK", 1)
 
--- Anti-AFK
 local afkCard = CreateFeatureCard(PlayerTab, "Anti-AFK Schutz", "Verhindert, dass du wegen Inaktivität gekickt wirst.", 2)
 local antiAfkActive = false
-_, setAfk = CreateToggle(afkCard, function(enabled)
+local _, setAfk = CreateToggle(afkCard, function(enabled)
     antiAfkActive = enabled
     Settings.AntiAFK = enabled
     SaveConfig()
@@ -552,7 +535,6 @@ LocalPlayer.Idled:Connect(function()
 end)
 setAfk(Settings.AntiAFK)
 
--- WalkSpeed
 local speedCard = CreateFeatureCard(PlayerTab, "WalkSpeed", "Passe deine Gehgeschwindigkeit an.", 3)
 local speedInput = Instance.new("TextBox")
 speedInput.Size = UDim2.new(0, 65, 0, 30)
@@ -581,7 +563,6 @@ speedInput.FocusLost:Connect(function()
     end
 end)
 
--- Fly Mode
 local flyCard = CreateFeatureCard(PlayerTab, "Fly Mode", "Fliege frei mit WASD und Leertaste durch die Luft.", 4)
 local flying = false
 local bg, bv
@@ -592,7 +573,7 @@ local function StopFly()
     if bv then bv:Destroy(); bv = nil end
 end
 
-_, setFly = CreateToggle(flyCard, function(enabled)
+local _, setFly = CreateToggle(flyCard, function(enabled)
     Settings.Fly = enabled
     SaveConfig()
 
@@ -623,12 +604,12 @@ _, setFly = CreateToggle(flyCard, function(enabled)
             local camera = workspace.CurrentCamera
             local direction = Vector3.zero
 
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction += camera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction -= camera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction -= camera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction += camera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction += Vector3.new(0, 1, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then direction -= Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - camera.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + camera.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then direction = direction - Vector3.new(0, 1, 0) end
 
             bv.Velocity = direction * 50
             bg.CFrame = camera.CFrame
@@ -639,13 +620,9 @@ _, setFly = CreateToggle(flyCard, function(enabled)
 end)
 setFly(Settings.Fly)
 
---//====================================================
---// GAME CHEATS TAB (Auto-Farm, Teleport, Spins, Rebirth)
---//====================================================
-
+--// GAME CHEATS TAB
 CreateSectionTitle(MainScriptTab, "Game Automation", "Automatisierte Skripte für das Spiel", 1)
 
--- 1. Ultra Speed Clicker
 local clickCard = CreateFeatureCard(MainScriptTab, "Ultra Speed Clicker", "Erhöht automatisch deine Geschwindigkeit im Sekundentakt.", 2)
 local autoFarmActive = false
 local farmConnection
@@ -660,7 +637,6 @@ CreateToggle(clickCard, function(enabled)
     end
 end)
 
--- 2. Auto Spin
 local spinCard = CreateFeatureCard(MainScriptTab, "Auto Claim / Free Spins", "Sammelt automatisch Gratis-Spins und Belohnungen ein.", 3)
 local autoSpinActive = false
 CreateToggle(spinCard, function(enabled)
@@ -681,10 +657,8 @@ CreateToggle(spinCard, function(enabled)
     end
 end)
 
--- Sektion für Auto Win Teleport
 CreateSectionTitle(MainScriptTab, "Auto Win Teleport", "Wähle deine Zielwelt für den Auto-Teleport aus:", 4)
 
--- 3. Welten Dropdown für Teleport
 local dropdownFrame = Instance.new("Frame")
 dropdownFrame.Size = UDim2.new(1, -5, 0, 45)
 dropdownFrame.BorderSizePixel = 0
@@ -747,11 +721,8 @@ for _, worldName in ipairs(winLocations) do
 	itemBtn.TextSize = 12
 	itemBtn.Font = Enum.Font.GothamMedium
 	itemBtn.TextXAlignment = Enum.TextXAlignment.Left
-	itemBtn.Parent = itemBtn.Parent or listScroll
-	
-	-- Fix itemBtn parent reference assignment check
 	itemBtn.Parent = listScroll
-
+	
 	local itemCorner = Instance.new("UICorner")
 	itemCorner.CornerRadius = UDim.new(0, 5)
 	itemCorner.Parent = itemBtn
@@ -776,8 +747,7 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 4. Gefixter Auto Win Teleport (Präzise Suche nach Win-Buttons / Touch-Parts)
-local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt auf den exakten Win-Button der Welt.", 6)
+local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 6)
 local autoWinActive = false
 CreateToggle(winCard, function(enabled)
     autoWinActive = enabled
@@ -790,76 +760,34 @@ CreateToggle(winCard, function(enabled)
                     local hrp = char.HumanoidRootPart
 
                     local targetPart = nil
-
-                    -- Funktion zum Finden des besten Win/Touch-Buttons innerhalb einer Welt/eines Modells
-                    local function findWinButton(parentObj)
-                        if not parentObj then return nil end
-                        
-                        -- Priorität 1: Suche nach typischen Namen für Win-Buttons/Trigger
-                        for _, desc in ipairs(parentObj:GetDescendants()) do
-                            local nameLower = desc.Name:lower()
-                            if (nameLower:find("win") or nameLower:find("button") or nameLower:find("goal") or nameLower:find("touch") or nameLower:find("pad") or nameLower:find("end")) and (desc:IsA("BasePart") or desc:IsA("Model")) then
-                                return desc
-                            end
-                        end
-                        
-                        -- Priorität 2: Fallback auf Hauptteil/PrimaryPart
-                        if parentObj:IsA("BasePart") then
-                            return parentObj
-                        elseif parentObj:IsA("Model") then
-                            return parentObj.PrimaryPart or parentObj:FindFirstChildWhichIsA("BasePart", true)
-                        end
-                        return nil
-                    end
-
-                    -- Schritt A: Gezielte Suche im Workspace nach der ausgewählten Welt
-                    local worldModel = nil
-                    for _, child in ipairs(workspace:GetChildren()) do
-                        if child.Name:lower():find(selectedWorld:lower()) then
-                            worldModel = child
-                            break
-                        end
-                    end
-
-                    -- Schritt B: Wenn nicht direkt gefunden, Ordner wie Wins/Maps/Towers durchsuchen
-                    if not worldModel then
-                        for _, folderName in ipairs({"Wins", "WorldGoals", "GoalParts", "Portals", "Maps", "Stages", "Towers", "Worlds"}) do
-                            local folder = workspace:FindFirstChild(folderName)
-                            if folder then
-                                local found = folder:FindFirstChild(selectedWorld, true)
-                                if found then
-                                    worldModel = found
-                                    break
-                                else
-                                    for _, descendant in ipairs(folder:GetDescendants()) do
-                                        if descendant.Name:lower():find(selectedWorld:lower()) then
-                                            worldModel = descendant
-                                            break
-                                        end
+                    for _, folderName in ipairs({"Wins", "WorldGoals", "GoalParts", "Portals", "Maps", "Stages", "Towers"}) do
+                        local folder = workspace:FindFirstChild(folderName)
+                        if folder then
+                            local found = folder:FindFirstChild(selectedWorld, true)
+                            if found then
+                                targetPart = found
+                                break
+                            else
+                                for _, descendant in ipairs(folder:GetDescendants()) do
+                                    if descendant.Name:lower():find(selectedWorld:lower()) then
+                                        targetPart = descendant
+                                        break
                                     end
                                 end
                             end
-                            if worldModel then break end
                         end
+                        if targetPart then break end
                     end
 
-                    -- Schritt C: Den exakten Button im gefundenen Objekt ermitteln
-                    if worldModel then
-                        targetPart = findWinButton(worldModel)
-                    end
-
-                    -- Schritt D: Globaler Notfall-Fallback, falls die Weltstruktur abweicht
                     if not targetPart then
                         for _, descendant in ipairs(workspace:GetDescendants()) do
-                            local n = descendant.Name:lower()
-                            if n:find(selectedWorld:lower()) and (n:find("win") or n:find("button") or n:find("goal")) and descendant:IsA("BasePart") then
+                            if descendant.Name:lower():find(selectedWorld:lower()) and (descendant:IsA("BasePart") or descendant:IsA("Model")) then
                                 targetPart = descendant
                                 break
                             end
                         end
                     end
 
-                    -- Schritt E: Teleportieren und Touch simulieren
                     local finalPart = nil
                     if targetPart then
                         if targetPart:IsA("BasePart") then
@@ -870,7 +798,6 @@ CreateToggle(winCard, function(enabled)
                     end
 
                     if finalPart then
-                        -- Direkt exakt auf dem Block zentrieren
                         hrp.CFrame = finalPart.CFrame + Vector3.new(0, 3, 0)
                         if firetouchinterest then
                             firetouchinterest(hrp, finalPart, 0)
@@ -885,7 +812,6 @@ CreateToggle(winCard, function(enabled)
     end
 end)
 
--- 5. Auto Rebirth
 local rebirthCard = CreateFeatureCard(MainScriptTab, "Auto Rebirth", "Führt automatisch Rebirths aus, sobald es möglich ist.", 7)
 local autoRebirthActive = false
 CreateToggle(rebirthCard, function(enabled)
@@ -907,7 +833,6 @@ CreateToggle(rebirthCard, function(enabled)
     end
 end)
 
--- 6. FPS Boost
 local fpsCard = CreateFeatureCard(MainScriptTab, "FPS Boost (Partikel aus)", "Schaltet Partikel und Effekte ab, um die FPS zu erhöhen.", 8)
 CreateToggle(fpsCard, function(enabled)
     for _, v in ipairs(workspace:GetDescendants()) do
@@ -917,13 +842,9 @@ CreateToggle(fpsCard, function(enabled)
     end
 end)
 
---//====================================================
---// SETTINGS TAB (Themes & UI-Größe)
---//====================================================
-
+--// SETTINGS TAB
 CreateSectionTitle(SettingsTab, "Settings & Anpassung", "Wähle Themes und UI-Größen", 1)
 
--- Themes
 local themeCard = Instance.new("Frame")
 themeCard.Size = UDim2.new(1, -5, 0, 190)
 themeCard.BorderSizePixel = 0
@@ -970,7 +891,6 @@ ThemeButtons["Green"] = CreateThemeButton("GREEN", 18, 98)
 ThemeButtons["Cyan"] = CreateThemeButton("CYAN", 132, 98)
 ThemeButtons["Gold"] = CreateThemeButton("GOLD", 246, 98)
 
--- UI Size
 local sizeCard = Instance.new("Frame")
 sizeCard.Size = UDim2.new(1, -5, 0, 190)
 sizeCard.BorderSizePixel = 0
@@ -1035,7 +955,6 @@ for _, option in ipairs(SizeOptions) do
     end)
 end
 
---// THEME APPLICATOR
 local function ApplyTheme(themeName)
     if not Themes[themeName] then return end
     LoadTheme(themeName)
@@ -1078,7 +997,6 @@ end
 
 ApplyTheme(Settings.Theme)
 
--- Skalierung und Buttons initialisieren
 UIScale.Scale = (function()
     for _, opt in ipairs(SizeOptions) do
         if opt.Name == Settings.UISize then return opt.Scale end
@@ -1096,10 +1014,7 @@ for name, button in pairs(SizeButtons) do
     end
 end
 
---//====================================================
 --// DRAGGING & CLOSE BUTTONS
---//====================================================
-
 local dragging, dragStart, startPosition
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -1148,4 +1063,4 @@ CloseButton.MouseButton1Click:Connect(function() MainFrame.Visible = false; Open
 OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenButton.Visible = false end)
 
 activatePlayer()
-print("CYSON HUB mit präzisem Win-Button Teleport erfolgreich geladen!")
+print("CYSON HUB erfolgreich geladen!")
