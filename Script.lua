@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB (Mit exakter Welten-Liste & Auto-Save)
+--// CYSON HUB (Mit gefixtem Präzisions-Win-Teleport)
 --// Mobile Friendly UI + Themes + UI Scaling + Auto-Layout
 --//====================================================
 
@@ -684,7 +684,7 @@ end)
 -- Sektion für Auto Win Teleport
 CreateSectionTitle(MainScriptTab, "Auto Win Teleport", "Wähle deine Zielwelt für den Auto-Teleport aus:", 4)
 
--- 3. Welten Dropdown für Teleport (Basierend auf der exakten winLocations Liste)
+-- 3. Welten Dropdown für Teleport
 local dropdownFrame = Instance.new("Frame")
 dropdownFrame.Size = UDim2.new(1, -5, 0, 45)
 dropdownFrame.BorderSizePixel = 0
@@ -747,8 +747,11 @@ for _, worldName in ipairs(winLocations) do
 	itemBtn.TextSize = 12
 	itemBtn.Font = Enum.Font.GothamMedium
 	itemBtn.TextXAlignment = Enum.TextXAlignment.Left
-	itemBtn.Parent = listScroll
+	itemBtn.Parent = itemBtn.Parent or listScroll
 	
+	-- Fix itemBtn parent reference assignment check
+	itemBtn.Parent = listScroll
+
 	local itemCorner = Instance.new("UICorner")
 	itemCorner.CornerRadius = UDim.new(0, 5)
 	itemCorner.Parent = itemBtn
@@ -773,8 +776,8 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 4. Auto Win Teleport Ausführen
-local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 6)
+-- 4. Gefixter Auto Win Teleport (Präzise Suche nach Win-Buttons / Touch-Parts)
+local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt auf den exakten Win-Button der Welt.", 6)
 local autoWinActive = false
 CreateToggle(winCard, function(enabled)
     autoWinActive = enabled
@@ -788,37 +791,75 @@ CreateToggle(winCard, function(enabled)
 
                     local targetPart = nil
 
-                    -- 1. Suche in gängigen Ordnern nach dem exakten Namen oder Teilen davon
-                    for _, folderName in ipairs({"Wins", "WorldGoals", "GoalParts", "Portals", "Maps", "Stages", "Towers"}) do
-                        local folder = workspace:FindFirstChild(folderName)
-                        if folder then
-                            local found = folder:FindFirstChild(selectedWorld, true)
-                            if found then
-                                targetPart = found
-                                break
-                            else
-                                for _, descendant in ipairs(folder:GetDescendants()) do
-                                    if descendant.Name:lower():find(selectedWorld:lower()) then
-                                        targetPart = descendant
-                                        break
+                    -- Funktion zum Finden des besten Win/Touch-Buttons innerhalb einer Welt/eines Modells
+                    local function findWinButton(parentObj)
+                        if not parentObj then return nil end
+                        
+                        -- Priorität 1: Suche nach typischen Namen für Win-Buttons/Trigger
+                        for _, desc in ipairs(parentObj:GetDescendants()) do
+                            local nameLower = desc.Name:lower()
+                            if (nameLower:find("win") or nameLower:find("button") or nameLower:find("goal") or nameLower:find("touch") or nameLower:find("pad") or nameLower:find("end")) and (desc:IsA("BasePart") or desc:IsA("Model")) then
+                                return desc
+                            end
+                        end
+                        
+                        -- Priorität 2: Fallback auf Hauptteil/PrimaryPart
+                        if parentObj:IsA("BasePart") then
+                            return parentObj
+                        elseif parentObj:IsA("Model") then
+                            return parentObj.PrimaryPart or parentObj:FindFirstChildWhichIsA("BasePart", true)
+                        end
+                        return nil
+                    end
+
+                    -- Schritt A: Gezielte Suche im Workspace nach der ausgewählten Welt
+                    local worldModel = nil
+                    for _, child in ipairs(workspace:GetChildren()) do
+                        if child.Name:lower():find(selectedWorld:lower()) then
+                            worldModel = child
+                            break
+                        end
+                    end
+
+                    -- Schritt B: Wenn nicht direkt gefunden, Ordner wie Wins/Maps/Towers durchsuchen
+                    if not worldModel then
+                        for _, folderName in ipairs({"Wins", "WorldGoals", "GoalParts", "Portals", "Maps", "Stages", "Towers", "Worlds"}) do
+                            local folder = workspace:FindFirstChild(folderName)
+                            if folder then
+                                local found = folder:FindFirstChild(selectedWorld, true)
+                                if found then
+                                    worldModel = found
+                                    break
+                                else
+                                    for _, descendant in ipairs(folder:GetDescendants()) do
+                                        if descendant.Name:lower():find(selectedWorld:lower()) then
+                                            worldModel = descendant
+                                            break
+                                        end
                                     end
                                 end
                             end
+                            if worldModel then break end
                         end
-                        if targetPart then break end
                     end
 
-                    -- 2. Wenn immer noch nichts gefunden, suche global im Workspace
+                    -- Schritt C: Den exakten Button im gefundenen Objekt ermitteln
+                    if worldModel then
+                        targetPart = findWinButton(worldModel)
+                    end
+
+                    -- Schritt D: Globaler Notfall-Fallback, falls die Weltstruktur abweicht
                     if not targetPart then
                         for _, descendant in ipairs(workspace:GetDescendants()) do
-                            if descendant.Name:lower():find(selectedWorld:lower()) and (descendant:IsA("BasePart") or descendant:IsA("Model")) then
+                            local n = descendant.Name:lower()
+                            if n:find(selectedWorld:lower()) and (n:find("win") or n:find("button") or n:find("goal")) and descendant:IsA("BasePart") then
                                 targetPart = descendant
                                 break
                             end
                         end
                     end
 
-                    -- 3. Zuordnen zu einer Basis-Part (BasePart) zum Teleportieren
+                    -- Schritt E: Teleportieren und Touch simulieren
                     local finalPart = nil
                     if targetPart then
                         if targetPart:IsA("BasePart") then
@@ -828,8 +869,8 @@ CreateToggle(winCard, function(enabled)
                         end
                     end
 
-                    -- 4. Ausführen des Teleports und Touch-Events
                     if finalPart then
+                        -- Direkt exakt auf dem Block zentrieren
                         hrp.CFrame = finalPart.CFrame + Vector3.new(0, 3, 0)
                         if firetouchinterest then
                             firetouchinterest(hrp, finalPart, 0)
@@ -1107,4 +1148,4 @@ CloseButton.MouseButton1Click:Connect(function() MainFrame.Visible = false; Open
 OpenButton.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenButton.Visible = false end)
 
 activatePlayer()
-print("CYSON HUB mit exakter Welten-Liste erfolgreich geladen!")
+print("CYSON HUB mit präzisem Win-Button Teleport erfolgreich geladen!")
