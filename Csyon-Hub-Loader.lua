@@ -1,9 +1,9 @@
 --// =========================================================
---// CSYON HUB - GAME LOADER
---// Modern • Mobile Friendly • Draggable • Minimizable
+--// CSYON HUB - CYBER LOADER
+--// Neon Cyber • Mobile • Draggable • Minimizable
 --// =========================================================
 
---// Services
+--// SERVICES
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
@@ -17,31 +17,46 @@ local gameId = game.PlaceId
 --// =========================================================
 
 local Config = {
-	Title = "CSYON HUB",
-	Version = "v1.0",
 
-	-- Größe des Loaders
-	DesktopSize = Vector2.new(450, 350),
-	MobileScale = 0.82,
+	Title = "CSYON",
+	Subtitle = "HUB LOADER",
+	Version = "v2.0",
 
-	-- Farben
-	Background = Color3.fromRGB(8, 9, 15),
-	Panel = Color3.fromRGB(14, 15, 23),
-	Panel2 = Color3.fromRGB(19, 20, 31),
+	DesktopSize = Vector2.new(500, 400),
 
-	Accent = Color3.fromRGB(0, 255, 150),
-	AccentDark = Color3.fromRGB(0, 190, 110),
+	-- Handy automatisch kleiner
+	MobileScale = 0.78,
 
-	White = Color3.fromRGB(245, 247, 255),
-	Text = Color3.fromRGB(210, 213, 230),
-	Muted = Color3.fromRGB(120, 125, 145),
+	-- Background
+	Background = Color3.fromRGB(7, 5, 16),
+	Background2 = Color3.fromRGB(12, 8, 25),
 
-	Red = Color3.fromRGB(255, 70, 85),
-	Yellow = Color3.fromRGB(255, 190, 60),
+	-- Panels
+	Panel = Color3.fromRGB(15, 11, 29),
+	Panel2 = Color3.fromRGB(22, 16, 40),
+	Card = Color3.fromRGB(18, 13, 35),
 
-	-- Animation
-	OpenTime = 0.45,
-	CloseTime = 0.30,
+	-- Neon
+	Purple = Color3.fromRGB(145, 70, 255),
+	Purple2 = Color3.fromRGB(205, 65, 255),
+
+	Blue = Color3.fromRGB(55, 135, 255),
+	Cyan = Color3.fromRGB(0, 235, 255),
+
+	Pink = Color3.fromRGB(255, 55, 190),
+
+	-- Status
+	Green = Color3.fromRGB(45, 255, 155),
+	Yellow = Color3.fromRGB(255, 200, 65),
+	Red = Color3.fromRGB(255, 65, 100),
+
+	-- Text
+	White = Color3.fromRGB(248, 247, 255),
+	Text = Color3.fromRGB(205, 201, 225),
+	Muted = Color3.fromRGB(125, 116, 155),
+
+	OpenTime = 0.5,
+	CloseTime = 0.3,
 }
 
 --// =========================================================
@@ -49,27 +64,34 @@ local Config = {
 --// =========================================================
 
 local supportedGames = {
+
 	{
 		Id = 140317247681516,
 		Name = "+1 Jump Clicker",
+		ShortName = "JUMP CLICKER",
+		Icon = "⚡",
 		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Script.lua"
 	},
 
 	{
 		Id = 92630121427800,
-		Name = "Where Did I Park? 🚗",
+		Name = "Where Did I Park?",
+		ShortName = "WHERE DID I PARK?",
+		Icon = "🚗",
 		ScriptUrl = ""
 	},
 
 	{
 		Id = 1122334455,
-		Name = "Soon",
+		Name = "New Game",
+		ShortName = "COMING SOON",
+		Icon = "🎮",
 		ScriptUrl = ""
 	},
 }
 
 --// =========================================================
---// CLEAN OLD GUI
+--// CLEAN OLD UI
 --// =========================================================
 
 local oldGui = CoreGui:FindFirstChild("CsyonLoaderGUI")
@@ -89,39 +111,80 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Parent = CoreGui
 
 --// =========================================================
---// SCALE
+--// UI SCALE
 --// =========================================================
 
 local uiScale = Instance.new("UIScale")
-uiScale.Scale = UserInputService.TouchEnabled
-	and Config.MobileScale
-	or 1
+
+if UserInputService.TouchEnabled then
+	uiScale.Scale = Config.MobileScale
+else
+	uiScale.Scale = 1
+end
 
 --// =========================================================
---// MAIN FRAME
+--// MAIN
 --// =========================================================
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "Main"
-mainFrame.Size = UDim2.fromOffset(0, 0)
-mainFrame.Position = UDim2.fromScale(0.5, 0.5)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.BackgroundColor3 = Config.Background
-mainFrame.BorderSizePixel = 0
-mainFrame.ClipsDescendants = true
-mainFrame.Parent = screenGui
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.fromOffset(0, 0)
+main.Position = UDim2.fromScale(0.5, 0.5)
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.BackgroundColor3 = Config.Background
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = screenGui
 
-uiScale.Parent = mainFrame
+uiScale.Parent = main
 
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 18)
-mainCorner.Parent = mainFrame
+mainCorner.CornerRadius = UDim.new(0, 22)
+mainCorner.Parent = main
 
 local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Config.Accent
-mainStroke.Transparency = 0.45
+mainStroke.Color = Config.Purple
+mainStroke.Transparency = 0.2
 mainStroke.Thickness = 1.5
-mainStroke.Parent = mainFrame
+mainStroke.Parent = main
+
+--// MAIN GRADIENT
+local mainGradient = Instance.new("UIGradient")
+mainGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Config.Background),
+	ColorSequenceKeypoint.new(0.5, Config.Background2),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 7, 20))
+})
+mainGradient.Rotation = 135
+mainGradient.Parent = main
+
+--// =========================================================
+--// BACKGROUND GLOW
+--// =========================================================
+
+local glowLeft = Instance.new("Frame")
+glowLeft.Size = UDim2.fromOffset(180, 180)
+glowLeft.Position = UDim2.fromOffset(-100, 100)
+glowLeft.BackgroundColor3 = Config.Purple
+glowLeft.BackgroundTransparency = 0.88
+glowLeft.BorderSizePixel = 0
+glowLeft.Parent = main
+
+local glowLeftCorner = Instance.new("UICorner")
+glowLeftCorner.CornerRadius = UDim.new(1, 0)
+glowLeftCorner.Parent = glowLeft
+
+local glowRight = Instance.new("Frame")
+glowRight.Size = UDim2.fromOffset(200, 200)
+glowRight.Position = UDim2.new(1, -100, 1, -130)
+glowRight.BackgroundColor3 = Config.Blue
+glowRight.BackgroundTransparency = 0.9
+glowRight.BorderSizePixel = 0
+glowRight.Parent = main
+
+local glowRightCorner = Instance.new("UICorner")
+glowRightCorner.CornerRadius = UDim.new(1, 0)
+glowRightCorner.Parent = glowRight
 
 --// =========================================================
 --// TOP BAR
@@ -129,456 +192,520 @@ mainStroke.Parent = mainFrame
 
 local topBar = Instance.new("Frame")
 topBar.Name = "TopBar"
-topBar.Size = UDim2.new(1, 0, 0, 64)
-topBar.BackgroundColor3 = Config.Panel
-topBar.BorderSizePixel = 0
-topBar.Parent = mainFrame
+topBar.Size = UDim2.new(1, 0, 0, 76)
+topBar.BackgroundTransparency = 1
+topBar.Parent = main
 
-local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0, 18)
-topCorner.Parent = topBar
-
--- Fix lower corners
-local topFix = Instance.new("Frame")
-topFix.Size = UDim2.new(1, 0, 0, 18)
-topFix.Position = UDim2.new(0, 0, 1, -18)
-topFix.BackgroundColor3 = Config.Panel
-topFix.BorderSizePixel = 0
-topFix.Parent = topBar
-
---// Logo
+--// Logo circle
 local logo = Instance.new("TextLabel")
-logo.Size = UDim2.fromOffset(38, 38)
-logo.Position = UDim2.fromOffset(14, 13)
-logo.BackgroundColor3 = Config.Accent
+logo.Size = UDim2.fromOffset(46, 46)
+logo.Position = UDim2.fromOffset(17, 15)
+logo.BackgroundColor3 = Config.Purple
 logo.Text = "⚡"
-logo.TextColor3 = Config.Background
-logo.TextSize = 18
+logo.TextColor3 = Config.White
+logo.TextSize = 21
 logo.Font = Enum.Font.GothamBold
 logo.Parent = topBar
 
 local logoCorner = Instance.new("UICorner")
-logoCorner.CornerRadius = UDim.new(0, 10)
+logoCorner.CornerRadius = UDim.new(0, 14)
 logoCorner.Parent = logo
+
+local logoGradient = Instance.new("UIGradient")
+logoGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Config.Purple2),
+	ColorSequenceKeypoint.new(1, Config.Blue)
+})
+logoGradient.Rotation = 45
+logoGradient.Parent = logo
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = Config.Cyan
+logoStroke.Transparency = 0.35
+logoStroke.Thickness = 1
+logoStroke.Parent = logo
 
 --// Title
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -140, 0, 25)
-title.Position = UDim2.fromOffset(62, 10)
+title.Size = UDim2.new(1, -180, 0, 27)
+title.Position = UDim2.fromOffset(76, 13)
 title.BackgroundTransparency = 1
 title.Text = Config.Title
 title.TextColor3 = Config.White
-title.TextSize = 15
-title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.Font = Enum.Font.GothamBlack
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = topBar
 
+--// Title gradient
+local titleGradient = Instance.new("UIGradient")
+titleGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Config.Purple2),
+	ColorSequenceKeypoint.new(0.5, Config.Cyan),
+	ColorSequenceKeypoint.new(1, Config.Pink)
+})
+titleGradient.Parent = title
+
 --// Subtitle
 local subtitle = Instance.new("TextLabel")
-subtitle.Size = UDim2.new(1, -140, 0, 20)
-subtitle.Position = UDim2.fromOffset(62, 34)
+subtitle.Size = UDim2.new(1, -180, 0, 18)
+subtitle.Position = UDim2.fromOffset(77, 39)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Game Loader • " .. Config.Version
+subtitle.Text = Config.Subtitle .. "  •  " .. Config.Version
 subtitle.TextColor3 = Config.Muted
-subtitle.TextSize = 10
-subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextSize = 9
+subtitle.Font = Enum.Font.GothamBold
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = topBar
 
 --// =========================================================
---// CLOSE BUTTON
+--// TOP BUTTONS
 --// =========================================================
 
-local closeBtn = Instance.new("TextButton")
-closeBtn.Name = "Close"
-closeBtn.Size = UDim2.fromOffset(32, 32)
-closeBtn.Position = UDim2.new(1, -44, 0, 16)
-closeBtn.BackgroundColor3 = Color3.fromRGB(35, 25, 31)
-closeBtn.Text = "×"
-closeBtn.TextColor3 = Config.Red
-closeBtn.TextSize = 18
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.AutoButtonColor = false
-closeBtn.Parent = topBar
+local minimize = Instance.new("TextButton")
+minimize.Size = UDim2.fromOffset(34, 34)
+minimize.Position = UDim2.new(1, -82, 0, 21)
+minimize.BackgroundColor3 = Config.Panel2
+minimize.Text = "−"
+minimize.TextColor3 = Config.Text
+minimize.TextSize = 18
+minimize.Font = Enum.Font.GothamBold
+minimize.AutoButtonColor = false
+minimize.Parent = topBar
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 10)
+minCorner.Parent = minimize
+
+local close = Instance.new("TextButton")
+close.Size = UDim2.fromOffset(34, 34)
+close.Position = UDim2.new(1, -42, 0, 21)
+close.BackgroundColor3 = Color3.fromRGB(48, 18, 36)
+close.Text = "×"
+close.TextColor3 = Config.Pink
+close.TextSize = 18
+close.Font = Enum.Font.GothamBold
+close.AutoButtonColor = false
+close.Parent = topBar
 
 local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 9)
-closeCorner.Parent = closeBtn
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = close
 
 --// =========================================================
---// MINIMIZE BUTTON
+--// DIVIDER
 --// =========================================================
 
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Name = "Minimize"
-minimizeBtn.Size = UDim2.fromOffset(32, 32)
-minimizeBtn.Position = UDim2.new(1, -82, 0, 16)
-minimizeBtn.BackgroundColor3 = Config.Panel2
-minimizeBtn.Text = "−"
-minimizeBtn.TextColor3 = Config.Text
-minimizeBtn.TextSize = 18
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.AutoButtonColor = false
-minimizeBtn.Parent = topBar
-
-local minimizeCorner = Instance.new("UICorner")
-minimizeCorner.CornerRadius = UDim.new(0, 9)
-minimizeCorner.Parent = minimizeBtn
+local divider = Instance.new("Frame")
+divider.Size = UDim2.new(1, -34, 0, 1)
+divider.Position = UDim2.fromOffset(17, 75)
+divider.BackgroundColor3 = Config.Purple
+divider.BackgroundTransparency = 0.7
+divider.BorderSizePixel = 0
+divider.Parent = main
 
 --// =========================================================
---// STATUS HEADER
+--// CURRENT GAME HERO
 --// =========================================================
 
-local statusFrame = Instance.new("Frame")
-statusFrame.Size = UDim2.new(1, -32, 0, 42)
-statusFrame.Position = UDim2.fromOffset(16, 78)
-statusFrame.BackgroundColor3 = Config.Panel
-statusFrame.BorderSizePixel = 0
-statusFrame.Parent = mainFrame
+local currentGameData = nil
 
-local statusCorner = Instance.new("UICorner")
-statusCorner.CornerRadius = UDim.new(0, 11)
-statusCorner.Parent = statusFrame
+for _, data in ipairs(supportedGames) do
+	if gameId == data.Id then
+		currentGameData = data
+		break
+	end
+end
 
-local statusDot = Instance.new("Frame")
-statusDot.Size = UDim2.fromOffset(9, 9)
-statusDot.Position = UDim2.fromOffset(14, 16)
-statusDot.BackgroundColor3 = Config.Yellow
-statusDot.BorderSizePixel = 0
-statusDot.Parent = statusFrame
+local hero = Instance.new("Frame")
+hero.Name = "CurrentGame"
+hero.Size = UDim2.new(1, -34, 0, 125)
+hero.Position = UDim2.fromOffset(17, 91)
+hero.BackgroundColor3 = Config.Card
+hero.BorderSizePixel = 0
+hero.Parent = main
 
-local statusDotCorner = Instance.new("UICorner")
-statusDotCorner.CornerRadius = UDim.new(1, 0)
-statusDotCorner.Parent = statusDot
+local heroCorner = Instance.new("UICorner")
+heroCorner.CornerRadius = UDim.new(0, 17)
+heroCorner.Parent = hero
 
-local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -45, 1, 0)
-statusText.Position = UDim2.fromOffset(32, 0)
-statusText.BackgroundTransparency = 1
-statusText.Text = "Checking current game..."
-statusText.TextColor3 = Config.Text
-statusText.TextSize = 11
-statusText.Font = Enum.Font.GothamMedium
-statusText.TextXAlignment = Enum.TextXAlignment.Left
-statusText.Parent = statusFrame
+local heroGradient = Instance.new("UIGradient")
+heroGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(31, 18, 58)),
+	ColorSequenceKeypoint.new(0.55, Color3.fromRGB(20, 18, 43)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 27, 53))
+})
+heroGradient.Rotation = 15
+heroGradient.Parent = hero
+
+local heroStroke = Instance.new("UIStroke")
+heroStroke.Color = currentGameData
+	and Config.Purple2
+	or Config.Blue
+heroStroke.Transparency = 0.25
+heroStroke.Thickness = 1.5
+heroStroke.Parent = hero
+
+--// Hero icon
+local heroIcon = Instance.new("TextLabel")
+heroIcon.Size = UDim2.fromOffset(62, 62)
+heroIcon.Position = UDim2.fromOffset(18, 18)
+heroIcon.BackgroundColor3 = Config.Purple
+heroIcon.Text = currentGameData and currentGameData.Icon or "?"
+heroIcon.TextSize = 27
+heroIcon.Font = Enum.Font.GothamBold
+heroIcon.Parent = hero
+
+local heroIconCorner = Instance.new("UICorner")
+heroIconCorner.CornerRadius = UDim.new(0, 17)
+heroIconCorner.Parent = heroIcon
+
+local heroIconGradient = Instance.new("UIGradient")
+heroIconGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Config.Purple2),
+	ColorSequenceKeypoint.new(1, Config.Blue)
+})
+heroIconGradient.Rotation = 45
+heroIconGradient.Parent = heroIcon
+
+--// Current label
+local currentLabel = Instance.new("TextLabel")
+currentLabel.Size = UDim2.new(1, -115, 0, 17)
+currentLabel.Position = UDim2.fromOffset(95, 14)
+currentLabel.BackgroundTransparency = 1
+currentLabel.Text = "CURRENT GAME"
+currentLabel.TextColor3 = Config.Cyan
+currentLabel.TextSize = 8
+currentLabel.Font = Enum.Font.GothamBlack
+currentLabel.TextXAlignment = Enum.TextXAlignment.Left
+currentLabel.Parent = hero
+
+--// Game name
+local currentName = Instance.new("TextLabel")
+currentName.Size = UDim2.new(1, -125, 0, 27)
+currentName.Position = UDim2.fromOffset(95, 30)
+currentName.BackgroundTransparency = 1
+currentName.Text = currentGameData
+	and currentGameData.Name
+	or "Unsupported Game"
+currentName.TextColor3 = Config.White
+currentName.TextSize = 15
+currentName.Font = Enum.Font.GothamBold
+currentName.TextXAlignment = Enum.TextXAlignment.Left
+currentName.TextTruncate = Enum.TextTruncate.AtEnd
+currentName.Parent = hero
+
+--// Status
+local currentStatus = Instance.new("TextLabel")
+currentStatus.Size = UDim2.new(1, -125, 0, 18)
+currentStatus.Position = UDim2.fromOffset(95, 57)
+currentStatus.BackgroundTransparency = 1
+
+if currentGameData and currentGameData.ScriptUrl ~= "" then
+	currentStatus.Text = "●  SCRIPT AVAILABLE"
+	currentStatus.TextColor3 = Config.Green
+elseif currentGameData then
+	currentStatus.Text = "●  COMING SOON"
+	currentStatus.TextColor3 = Config.Yellow
+else
+	currentStatus.Text = "●  NOT SUPPORTED"
+	currentStatus.TextColor3 = Config.Red
+end
+
+currentStatus.TextSize = 8
+currentStatus.Font = Enum.Font.GothamBold
+currentStatus.TextXAlignment = Enum.TextXAlignment.Left
+currentStatus.Parent = hero
 
 --// =========================================================
---// GAMES CONTAINER
+--// LOAD BUTTON
 --// =========================================================
 
-local gamesContainer = Instance.new("ScrollingFrame")
-gamesContainer.Name = "Games"
-gamesContainer.Size = UDim2.new(1, -32, 1, -175)
-gamesContainer.Position = UDim2.fromOffset(16, 130)
-gamesContainer.BackgroundTransparency = 1
-gamesContainer.BorderSizePixel = 0
-gamesContainer.ScrollBarThickness = 3
-gamesContainer.ScrollBarImageColor3 = Config.Accent
-gamesContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-gamesContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-gamesContainer.Parent = mainFrame
+local loadButton = Instance.new("TextButton")
+loadButton.Size = UDim2.new(1, -36, 0, 32)
+loadButton.Position = UDim2.new(0, 18, 1, -43)
+loadButton.BackgroundColor3 = Config.Purple
+loadButton.Text = "⚡  LOAD CSYON HUB"
+loadButton.TextColor3 = Config.White
+loadButton.TextSize = 10
+loadButton.Font = Enum.Font.GothamBlack
+loadButton.AutoButtonColor = false
+loadButton.Parent = hero
 
-local listPadding = Instance.new("UIPadding")
-listPadding.PaddingBottom = UDim.new(0, 5)
-listPadding.Parent = gamesContainer
+local loadCorner = Instance.new("UICorner")
+loadCorner.CornerRadius = UDim.new(0, 10)
+loadCorner.Parent = loadButton
 
-local listLayout = Instance.new("UIListLayout")
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-listLayout.Padding = UDim.new(0, 9)
-listLayout.Parent = gamesContainer
+local loadGradient = Instance.new("UIGradient")
+loadGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Config.Purple),
+	ColorSequenceKeypoint.new(0.5, Config.Pink),
+	ColorSequenceKeypoint.new(1, Config.Blue)
+})
+loadGradient.Rotation = 0
+loadGradient.Parent = loadButton
+
+local loadStroke = Instance.new("UIStroke")
+loadStroke.Color = Config.Cyan
+loadStroke.Transparency = 0.5
+loadStroke.Thickness = 1
+loadStroke.Parent = loadButton
+
+--// Disable if unavailable
+if not currentGameData or currentGameData.ScriptUrl == "" then
+	loadButton.Text = currentGameData
+		and "COMING SOON"
+		or "GAME NOT SUPPORTED"
+
+	loadButton.BackgroundColor3 = Config.Panel2
+	loadButton.TextColor3 = Config.Muted
+	loadButton.Active = false
+end
+
+--// =========================================================
+--// OTHER GAMES LABEL
+--// =========================================================
+
+local otherLabel = Instance.new("TextLabel")
+otherLabel.Size = UDim2.new(1, -34, 0, 20)
+otherLabel.Position = UDim2.fromOffset(17, 230)
+otherLabel.BackgroundTransparency = 1
+otherLabel.Text = "OTHER GAMES"
+otherLabel.TextColor3 = Config.Muted
+otherLabel.TextSize = 8
+otherLabel.Font = Enum.Font.GothamBlack
+otherLabel.TextXAlignment = Enum.TextXAlignment.Left
+otherLabel.Parent = main
+
+--// =========================================================
+--// OTHER GAMES SCROLL
+--// =========================================================
+
+local games = Instance.new("ScrollingFrame")
+games.Name = "Games"
+games.Size = UDim2.new(1, -34, 0, 92)
+games.Position = UDim2.fromOffset(17, 251)
+games.BackgroundTransparency = 1
+games.BorderSizePixel = 0
+games.ScrollBarThickness = 2
+games.ScrollBarImageColor3 = Config.Purple
+games.CanvasSize = UDim2.new(0, 0, 0, 0)
+games.AutomaticCanvasSize = Enum.AutomaticSize.Y
+games.Parent = main
+
+local gamesLayout = Instance.new("UIListLayout")
+gamesLayout.FillDirection = Enum.FillDirection.Horizontal
+gamesLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+gamesLayout.SortOrder = Enum.SortOrder.LayoutOrder
+gamesLayout.Padding = UDim.new(0, 10)
+gamesLayout.Parent = games
+
+--// =========================================================
+--// GAME CARDS
+--// =========================================================
+
+for index, data in ipairs(supportedGames) do
+
+	if data ~= currentGameData then
+
+		local hasScript = data.ScriptUrl ~= ""
+
+		local card = Instance.new("Frame")
+		card.Name = "GameCard_" .. index
+		card.Size = UDim2.fromOffset(145, 78)
+		card.BackgroundColor3 = Config.Panel
+		card.BorderSizePixel = 0
+		card.Parent = games
+
+		local cardCorner = Instance.new("UICorner")
+		cardCorner.CornerRadius = UDim.new(0, 13)
+		cardCorner.Parent = card
+
+		local cardStroke = Instance.new("UIStroke")
+		cardStroke.Color = hasScript
+			and Config.Blue
+			or Color3.fromRGB(43, 36, 65)
+		cardStroke.Transparency = 0.25
+		cardStroke.Thickness = 1
+		cardStroke.Parent = card
+
+		-- Icon
+		local icon = Instance.new("TextLabel")
+		icon.Size = UDim2.fromOffset(32, 32)
+		icon.Position = UDim2.fromOffset(10, 10)
+		icon.BackgroundColor3 = Config.Panel2
+		icon.Text = data.Icon
+		icon.TextSize = 15
+		icon.Font = Enum.Font.GothamBold
+		icon.Parent = card
+
+		local iconCorner = Instance.new("UICorner")
+		iconCorner.CornerRadius = UDim.new(0, 9)
+		iconCorner.Parent = icon
+
+		-- Name
+		local name = Instance.new("TextLabel")
+		name.Size = UDim2.new(1, -52, 0, 32)
+		name.Position = UDim2.fromOffset(49, 9)
+		name.BackgroundTransparency = 1
+		name.Text = data.ShortName or data.Name
+		name.TextColor3 = Config.Text
+		name.TextSize = 8
+		name.Font = Enum.Font.GothamBold
+		name.TextXAlignment = Enum.TextXAlignment.Left
+		name.TextYAlignment = Enum.TextYAlignment.Center
+		name.TextWrapped = true
+		name.Parent = card
+
+		-- Status
+		local status = Instance.new("TextLabel")
+		status.Size = UDim2.new(1, -20, 0, 17)
+		status.Position = UDim2.fromOffset(10, 53)
+		status.BackgroundTransparency = 1
+
+		if hasScript then
+			status.Text = "● AVAILABLE"
+			status.TextColor3 = Config.Green
+		else
+			status.Text = "● COMING SOON"
+			status.TextColor3 = Config.Yellow
+		end
+
+		status.TextSize = 7
+		status.Font = Enum.Font.GothamBlack
+		status.TextXAlignment = Enum.TextXAlignment.Left
+		status.Parent = card
+
+	end
+end
 
 --// =========================================================
 --// FOOTER
 --// =========================================================
 
 local footer = Instance.new("TextLabel")
-footer.Size = UDim2.new(1, -32, 0, 25)
-footer.Position = UDim2.new(0, 16, 1, -34)
+footer.Size = UDim2.new(1, -34, 0, 25)
+footer.Position = UDim2.new(0, 17, 1, -31)
 footer.BackgroundTransparency = 1
-footer.Text = "◆ Csyon Hub  •  Ready"
+footer.Text = "◆  CSYON HUB   •   ONLINE"
 footer.TextColor3 = Config.Muted
-footer.TextSize = 9
-footer.Font = Enum.Font.GothamMedium
+footer.TextSize = 8
+footer.Font = Enum.Font.GothamBold
 footer.TextXAlignment = Enum.TextXAlignment.Center
-footer.Parent = mainFrame
+footer.Parent = main
 
 --// =========================================================
---// GAME DETECTION
+--// LOAD FUNCTION
 --// =========================================================
 
-local currentGameData = nil
+local function closeLoader()
 
-for _, gameData in ipairs(supportedGames) do
-	if gameId == gameData.Id then
-		currentGameData = gameData
-		break
+	TweenService:Create(
+		main,
+		TweenInfo.new(
+			Config.CloseTime,
+			Enum.EasingStyle.Quart,
+			Enum.EasingDirection.In
+		),
+		{
+			Size = UDim2.fromOffset(0, 0)
+		}
+	):Play()
+
+	task.wait(Config.CloseTime)
+
+	if screenGui then
+		screenGui:Destroy()
 	end
 end
 
---// =========================================================
---// CREATE GAME CARD
---// =========================================================
+if currentGameData and currentGameData.ScriptUrl ~= "" then
 
-local function createGameCard(gameData, index)
+	loadButton.MouseEnter:Connect(function()
 
-	local isCurrent = gameData == currentGameData
-	local hasScript = gameData.ScriptUrl ~= nil and gameData.ScriptUrl ~= ""
+		TweenService:Create(
+			loadButton,
+			TweenInfo.new(0.18),
+			{
+				Size = UDim2.new(1, -30, 0, 35),
+				Position = UDim2.new(0, 15, 1, -46)
+			}
+		):Play()
 
-	-- Card
-	local card = Instance.new("Frame")
-	card.Name = "Game_" .. index
-	card.Size = UDim2.new(1, -4, 0, 60)
-	card.BackgroundColor3 = isCurrent
-		and Color3.fromRGB(13, 28, 24)
-		or Config.Panel
-	card.BorderSizePixel = 0
-	card.LayoutOrder = index
-	card.Parent = gamesContainer
+	end)
 
-	local cardCorner = Instance.new("UICorner")
-	cardCorner.CornerRadius = UDim.new(0, 12)
-	cardCorner.Parent = card
+	loadButton.MouseLeave:Connect(function()
 
-	local cardStroke = Instance.new("UIStroke")
-	cardStroke.Color = isCurrent
-		and Config.Accent
-		or Color3.fromRGB(35, 37, 50)
-	cardStroke.Transparency = isCurrent and 0.3 or 0
-	cardStroke.Thickness = isCurrent and 1.5 or 1
-	cardStroke.Parent = card
+		TweenService:Create(
+			loadButton,
+			TweenInfo.new(0.18),
+			{
+				Size = UDim2.new(1, -36, 0, 32),
+				Position = UDim2.new(0, 18, 1, -43)
+			}
+		):Play()
 
-	--// Status dot
-	local dot = Instance.new("Frame")
-	dot.Size = UDim2.fromOffset(9, 9)
-	dot.Position = UDim2.fromOffset(14, 25)
-	dot.BackgroundColor3 = isCurrent
-		and Config.Accent
-		or Color3.fromRGB(75, 78, 95)
-	dot.BorderSizePixel = 0
-	dot.Parent = card
+	end)
 
-	local dotCorner = Instance.new("UICorner")
-	dotCorner.CornerRadius = UDim.new(1, 0)
-	dotCorner.Parent = dot
+	loadButton.MouseButton1Click:Connect(function()
 
-	--// Game name
-	local gameName = Instance.new("TextLabel")
-	gameName.Size = UDim2.new(1, -160, 0, 22)
-	gameName.Position = UDim2.fromOffset(33, 10)
-	gameName.BackgroundTransparency = 1
-	gameName.Text = gameData.Name
-	gameName.TextColor3 = isCurrent
-		and Config.White
-		or Config.Muted
-	gameName.TextSize = 11
-	gameName.Font = Enum.Font.GothamBold
-	gameName.TextXAlignment = Enum.TextXAlignment.Left
-	gameName.TextTruncate = Enum.TextTruncate.AtEnd
-	gameName.Parent = card
+		loadButton.Active = false
+		loadButton.Text = "◌  LOADING..."
+		currentStatus.Text = "●  LOADING SCRIPT..."
+		currentStatus.TextColor3 = Config.Yellow
 
-	--// Status text
-	local smallStatus = Instance.new("TextLabel")
-	smallStatus.Size = UDim2.new(1, -160, 0, 18)
-	smallStatus.Position = UDim2.fromOffset(33, 31)
-	smallStatus.BackgroundTransparency = 1
-	smallStatus.Text =
-		isCurrent
-		and (hasScript and "● Supported • Ready" or "● Supported • Coming Soon")
-		or "○ Not detected"
-	smallStatus.TextColor3 =
-		isCurrent
-		and (hasScript and Config.Accent or Config.Yellow)
-		or Config.Muted
-	smallStatus.TextSize = 8
-	smallStatus.Font = Enum.Font.GothamMedium
-	smallStatus.TextXAlignment = Enum.TextXAlignment.Left
-	smallStatus.Parent = card
+		local success, result = pcall(function()
 
-	--// Load button
-	local loadBtn = Instance.new("TextButton")
-	loadBtn.Size = UDim2.fromOffset(96, 34)
-	loadBtn.Position = UDim2.new(1, -108, 0.5, -17)
-	loadBtn.AutoButtonColor = false
-	loadBtn.Font = Enum.Font.GothamBold
-	loadBtn.TextSize = 10
-	loadBtn.Parent = card
+			local source = game:HttpGet(currentGameData.ScriptUrl)
 
-	local btnCorner = Instance.new("UICorner")
-	btnCorner.CornerRadius = UDim.new(0, 9)
-	btnCorner.Parent = loadBtn
-
-	local btnStroke = Instance.new("UIStroke")
-	btnStroke.Thickness = 1
-	btnStroke.Parent = loadBtn
-
-	if isCurrent and hasScript then
-
-		loadBtn.BackgroundColor3 = Config.Accent
-		loadBtn.TextColor3 = Config.Background
-		loadBtn.Text = "LOAD"
-		btnStroke.Color = Config.Accent
-		btnStroke.Transparency = 0
-
-		-- Hover
-		loadBtn.MouseEnter:Connect(function()
-			TweenService:Create(
-				loadBtn,
-				TweenInfo.new(0.15),
-				{
-					BackgroundColor3 = Config.White
-				}
-			):Play()
-		end)
-
-		loadBtn.MouseLeave:Connect(function()
-			TweenService:Create(
-				loadBtn,
-				TweenInfo.new(0.15),
-				{
-					BackgroundColor3 = Config.Accent
-				}
-			):Play()
-		end)
-
-		-- Load
-		loadBtn.MouseButton1Click:Connect(function()
-
-			loadBtn.Active = false
-			loadBtn.Text = "LOADING..."
-			loadBtn.TextColor3 = Config.Background
-
-			statusText.Text = "Loading " .. gameData.Name .. "..."
-			statusDot.BackgroundColor3 = Config.Yellow
-
-			footer.Text = "◆ Csyon Hub  •  Loading..."
-
-			local success, result = pcall(function()
-				local source = game:HttpGet(gameData.ScriptUrl)
-
-				if not source or source == "" then
-					error("Script returned empty content")
-				end
-
-				local loadedFunction = loadstring(source)
-
-				if not loadedFunction then
-					error("Could not compile script")
-				end
-
-				return loadedFunction()
-			end)
-
-			if success then
-
-				statusText.Text = "Script loaded successfully!"
-				statusDot.BackgroundColor3 = Config.Accent
-				footer.Text = "◆ Csyon Hub  •  Loaded"
-
-				TweenService:Create(
-					loadBtn,
-					TweenInfo.new(0.2),
-					{
-						BackgroundColor3 = Config.AccentDark
-					}
-				):Play()
-
-				loadBtn.Text = "LOADED ✓"
-
-				task.wait(0.6)
-
-				TweenService:Create(
-					mainFrame,
-					TweenInfo.new(
-						Config.CloseTime,
-						Enum.EasingStyle.Quart,
-						Enum.EasingDirection.In
-					),
-					{
-						Size = UDim2.fromOffset(0, 0)
-					}
-				):Play()
-
-				task.wait(Config.CloseTime)
-
-				screenGui:Destroy()
-
-			else
-
-				warn("[Csyon Hub] Loading failed:", result)
-
-				statusText.Text = "Loading failed!"
-				statusDot.BackgroundColor3 = Config.Red
-				footer.Text = "◆ Csyon Hub  •  Error"
-
-				loadBtn.Text = "RETRY"
-				loadBtn.Active = true
-				loadBtn.BackgroundColor3 = Config.Red
-				loadBtn.TextColor3 = Config.White
-
-				task.delay(2, function()
-					if loadBtn and loadBtn.Parent then
-						loadBtn.BackgroundColor3 = Config.Accent
-						loadBtn.TextColor3 = Config.Background
-						loadBtn.Text = "LOAD"
-
-						statusText.Text = "Supported game detected!"
-						statusDot.BackgroundColor3 = Config.Accent
-						footer.Text = "◆ Csyon Hub  •  Ready"
-					end
-				end)
+			if not source or source == "" then
+				error("Empty script")
 			end
+
+			local func = loadstring(source)
+
+			if not func then
+				error("Script compilation failed")
+			end
+
+			return func()
 		end)
 
-	elseif isCurrent and not hasScript then
+		if success then
 
-		loadBtn.BackgroundColor3 = Color3.fromRGB(30, 31, 42)
-		loadBtn.TextColor3 = Config.Yellow
-		loadBtn.Text = "SOON"
-		btnStroke.Color = Config.Yellow
-		btnStroke.Transparency = 0.5
+			loadButton.Text = "✓  LOADED"
+			currentStatus.Text = "●  SCRIPT LOADED"
+			currentStatus.TextColor3 = Config.Green
+			footer.Text = "◆  CSYON HUB   •   LOADED"
 
-		loadBtn.Active = false
+			task.wait(0.5)
 
-	else
+			closeLoader()
 
-		loadBtn.BackgroundColor3 = Color3.fromRGB(25, 26, 36)
-		loadBtn.TextColor3 = Config.Muted
-		loadBtn.Text = "LOCKED"
-		btnStroke.Color = Color3.fromRGB(45, 46, 60)
-		btnStroke.Transparency = 0.5
+		else
 
-		loadBtn.Active = false
-	end
+			warn("[CSYON HUB] Error:", result)
 
-	return card
-end
+			loadButton.Active = true
+			loadButton.Text = "↻  RETRY"
+			currentStatus.Text = "●  LOAD FAILED"
+			currentStatus.TextColor3 = Config.Red
+			footer.Text = "◆  CSYON HUB   •   ERROR"
 
---// =========================================================
---// CREATE ALL GAME CARDS
---// =========================================================
+			task.delay(2, function()
 
-for index, gameData in ipairs(supportedGames) do
-	createGameCard(gameData, index)
-end
+				if loadButton and loadButton.Parent then
 
---// =========================================================
---// UPDATE GLOBAL STATUS
---// =========================================================
+					loadButton.Text = "⚡  LOAD CSYON HUB"
+					currentStatus.Text = "●  SCRIPT AVAILABLE"
+					currentStatus.TextColor3 = Config.Green
+					footer.Text = "◆  CSYON HUB   •   ONLINE"
 
-if currentGameData then
+				end
 
-	if currentGameData.ScriptUrl ~= "" then
-		statusText.Text = "Supported game detected!"
-		statusDot.BackgroundColor3 = Config.Accent
-	else
-		statusText.Text = "Game detected • Script coming soon"
-		statusDot.BackgroundColor3 = Config.Yellow
-	end
-
-else
-
-	statusText.Text = "No supported game detected"
-	statusDot.BackgroundColor3 = Config.Red
+			end)
+		end
+	end)
 end
 
 --// =========================================================
@@ -589,18 +716,6 @@ local dragging = false
 local dragStart
 local startPosition
 
-local function updateDrag(input)
-
-	local delta = input.Position - dragStart
-
-	mainFrame.Position = UDim2.new(
-		startPosition.X.Scale,
-		startPosition.X.Offset + delta.X,
-		startPosition.Y.Scale,
-		startPosition.Y.Offset + delta.Y
-	)
-end
-
 topBar.InputBegan:Connect(function(input)
 
 	if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -608,7 +723,7 @@ topBar.InputBegan:Connect(function(input)
 
 		dragging = true
 		dragStart = input.Position
-		startPosition = mainFrame.Position
+		startPosition = main.Position
 
 		input.Changed:Connect(function()
 
@@ -627,7 +742,15 @@ UserInputService.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement
 			or input.UserInputType == Enum.UserInputType.Touch then
 
-			updateDrag(input)
+			local delta = input.Position - dragStart
+
+			main.Position = UDim2.new(
+				startPosition.X.Scale,
+				startPosition.X.Offset + delta.X,
+				startPosition.Y.Scale,
+				startPosition.Y.Offset + delta.Y
+			)
+
 		end
 	end
 end)
@@ -646,31 +769,50 @@ local function setMinimized(state)
 
 	minimized = state
 
-	if minimized then
+	if state then
 
-		minimizeBtn.Text = "+"
-		gamesContainer.Visible = false
-		statusFrame.Visible = false
-		footer.Visible = false
+		minimize.Text = "+"
+
+		for _, child in ipairs(main:GetChildren()) do
+
+			if child ~= topBar
+				and child ~= mainStroke
+				and child ~= mainGradient
+				and child ~= mainCorner
+				and child ~= glowLeft
+				and child ~= glowRight
+				and child ~= uiScale then
+
+				if child:IsA("GuiObject") then
+					child.Visible = false
+				end
+			end
+		end
+
+		topBar.Visible = true
 
 		TweenService:Create(
-			mainFrame,
-			TweenInfo.new(0.25, Enum.EasingStyle.Quart),
+			main,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quart),
 			{
-				Size = UDim2.fromOffset(280, 64)
+				Size = UDim2.fromOffset(290, 76)
 			}
 		):Play()
 
 	else
 
-		minimizeBtn.Text = "−"
-		gamesContainer.Visible = true
-		statusFrame.Visible = true
-		footer.Visible = true
+		minimize.Text = "−"
+
+		for _, child in ipairs(main:GetChildren()) do
+
+			if child:IsA("GuiObject") then
+				child.Visible = true
+			end
+		end
 
 		TweenService:Create(
-			mainFrame,
-			TweenInfo.new(0.25, Enum.EasingStyle.Quart),
+			main,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quart),
 			{
 				Size = normalSize
 			}
@@ -678,93 +820,115 @@ local function setMinimized(state)
 	end
 end
 
-minimizeBtn.MouseButton1Click:Connect(function()
+minimize.MouseButton1Click:Connect(function()
 	setMinimized(not minimized)
 end)
 
 --// =========================================================
---// CLOSE
+--// BUTTON HOVERS
 --// =========================================================
 
-local function closeLoader()
+close.MouseEnter:Connect(function()
 
 	TweenService:Create(
-		mainFrame,
-		TweenInfo.new(
-			Config.CloseTime,
-			Enum.EasingStyle.Quart,
-			Enum.EasingDirection.In
-		),
-		{
-			Size = UDim2.fromOffset(0, 0)
-		}
-	):Play()
-
-	task.wait(Config.CloseTime)
-
-	if screenGui then
-		screenGui:Destroy()
-	end
-end
-
-closeBtn.MouseButton1Click:Connect(closeLoader)
-
---// =========================================================
---// BUTTON HOVER EFFECTS
---// =========================================================
-
-closeBtn.MouseEnter:Connect(function()
-
-	TweenService:Create(
-		closeBtn,
+		close,
 		TweenInfo.new(0.15),
 		{
-			BackgroundColor3 = Color3.fromRGB(60, 25, 32)
+			BackgroundColor3 = Config.Red
 		}
 	):Play()
+
+	close.TextColor3 = Config.White
+
 end)
 
-closeBtn.MouseLeave:Connect(function()
+close.MouseLeave:Connect(function()
 
 	TweenService:Create(
-		closeBtn,
+		close,
 		TweenInfo.new(0.15),
 		{
-			BackgroundColor3 = Color3.fromRGB(35, 25, 31)
+			BackgroundColor3 = Color3.fromRGB(48, 18, 36)
 		}
 	):Play()
+
+	close.TextColor3 = Config.Pink
+
 end)
 
-minimizeBtn.MouseEnter:Connect(function()
+minimize.MouseEnter:Connect(function()
 
 	TweenService:Create(
-		minimizeBtn,
+		minimize,
 		TweenInfo.new(0.15),
 		{
-			BackgroundColor3 = Color3.fromRGB(30, 32, 45)
+			BackgroundColor3 = Config.Purple
 		}
 	):Play()
+
+	minimize.TextColor3 = Config.White
+
 end)
 
-minimizeBtn.MouseLeave:Connect(function()
+minimize.MouseLeave:Connect(function()
 
 	TweenService:Create(
-		minimizeBtn,
+		minimize,
 		TweenInfo.new(0.15),
 		{
 			BackgroundColor3 = Config.Panel2
 		}
 	):Play()
+
+	minimize.TextColor3 = Config.Text
+
+end)
+
+--// =========================================================
+--// CLOSE BUTTON
+--// =========================================================
+
+close.MouseButton1Click:Connect(function()
+	closeLoader()
+end)
+
+--// =========================================================
+--// PULSE EFFECT
+--// =========================================================
+
+task.spawn(function()
+
+	while screenGui and screenGui.Parent do
+
+		TweenService:Create(
+			mainStroke,
+			TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{
+				Transparency = 0.55
+			}
+		):Play()
+
+		task.wait(1.4)
+
+		TweenService:Create(
+			mainStroke,
+			TweenInfo.new(1.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{
+				Transparency = 0.15
+			}
+		):Play()
+
+		task.wait(1.4)
+	end
+
 end)
 
 --// =========================================================
 --// OPEN ANIMATION
 --// =========================================================
 
-mainFrame.Size = UDim2.fromOffset(0, 0)
-
 TweenService:Create(
-	mainFrame,
+	main,
 	TweenInfo.new(
 		Config.OpenTime,
 		Enum.EasingStyle.Back,
@@ -776,10 +940,13 @@ TweenService:Create(
 ):Play()
 
 --// =========================================================
---// FINAL
+--// DEBUG
 --// =========================================================
 
-print("⚡ Csyon Hub Loader loaded.")
+print("╔══════════════════════════════╗")
+print("║       ⚡ CSYON HUB           ║")
+print("║       Cyber Loader v2.0      ║")
+print("╚══════════════════════════════╝")
 print("Game ID:", gameId)
 
 if currentGameData then
