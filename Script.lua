@@ -314,7 +314,6 @@ local function CreateTab(name)
     tab.Parent = ContentContainer
     BindTheme(tab, "ScrollBarImageColor3", "Accent")
 
-    -- Automatisches Layout für den gesamten Tab, damit Elemente sauber untereinander hängen
     local listLayout = Instance.new("UIListLayout")
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
     listLayout.Padding = UDim.new(0, 10)
@@ -774,7 +773,7 @@ dropdownBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 4. Auto Win Teleport Ausführen
+-- 4. Auto Win Teleport Ausführen (Verbesserte Suche)
 local winCard = CreateFeatureCard(MainScriptTab, "Auto Win Teleport Ausführen", "Teleportiert dich direkt zur gewählten Welt und simuliert den Touch.", 6)
 local autoWinActive = false
 CreateToggle(winCard, function(enabled)
@@ -783,32 +782,59 @@ CreateToggle(winCard, function(enabled)
         task.spawn(function()
             while autoWinActive do
                 pcall(function()
-                    local winsFolder = workspace:FindFirstChild("Wins") or workspace:FindFirstChild("WorldGoals") or workspace:FindFirstChild("GoalParts")
-                    local targetObj = nil
-                    
-                    if winsFolder then
-                        targetObj = winsFolder:FindFirstChild(selectedWorld, true)
-                    end
-                    
-                    if not targetObj then
-                        targetObj = workspace:FindFirstChild(selectedWorld, true)
-                    end
+                    local char = LocalPlayer.Character
+                    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                    local hrp = char.HumanoidRootPart
 
-                    if targetObj and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        local targetPart = nil
-                        if targetObj:IsA("BasePart") then
-                            targetPart = targetObj
-                        elseif targetObj:IsA("Model") then
-                            targetPart = targetObj.PrimaryPart or targetObj:FindFirstChildWhichIsA("BasePart", true)
-                        end
+                    local targetPart = nil
 
-                        if targetPart then
-                            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPart.CFrame + Vector3.new(0, 3, 0)
-                            if firetouchinterest then
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, targetPart, 0)
-                                task.wait(0.05)
-                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, targetPart, 1)
+                    -- 1. Suche in gängigen Ordnern nach dem exakten Namen oder Teilen davon
+                    for _, folderName in ipairs({"Wins", "WorldGoals", "GoalParts", "Portals", "Maps", "Stages", "Towers"}) do
+                        local folder = workspace:FindFirstChild(folderName)
+                        if folder then
+                            local found = folder:FindFirstChild(selectedWorld, true)
+                            if found then
+                                targetPart = found
+                                break
+                            else
+                                for _, descendant in ipairs(folder:GetDescendants()) do
+                                    if descendant.Name:lower():find(selectedWorld:lower()) then
+                                        targetPart = descendant
+                                        break
+                                    end
+                                end
                             end
+                        end
+                        if targetPart then break end
+                    end
+
+                    -- 2. Wenn immer noch nichts gefunden, suche global im Workspace
+                    if not targetPart then
+                        for _, descendant in ipairs(workspace:GetDescendants()) do
+                            if descendant.Name:lower():find(selectedWorld:lower()) and (descendant:IsA("BasePart") or descendant:IsA("Model")) then
+                                targetPart = descendant
+                                break
+                            end
+                        end
+                    end
+
+                    -- 3. Zuordnen zu einer Basis-Part (BasePart) zum Teleportieren
+                    local finalPart = nil
+                    if targetPart then
+                        if targetPart:IsA("BasePart") then
+                            finalPart = targetPart
+                        elseif targetPart:IsA("Model") then
+                            finalPart = targetPart.PrimaryPart or targetPart:FindFirstChildWhichIsA("BasePart", true)
+                        end
+                    end
+
+                    -- 4. Ausführen des Teleports und Touch-Events
+                    if finalPart then
+                        hrp.CFrame = finalPart.CFrame + Vector3.new(0, 3, 0)
+                        if firetouchinterest then
+                            firetouchinterest(hrp, finalPart, 0)
+                            task.wait(0.05)
+                            firetouchinterest(hrp, finalPart, 1)
                         end
                     end
                 end)
