@@ -37,8 +37,20 @@ local CarIDs = {
     51004,51005,51006,51009,51396,51400,51403,51404,51405
 }
 
+
+--//====================================================
+--// CHARACTER
+--//====================================================
+
 local function GetRoot()
-    local character = game.Players.LocalPlayer.Character
+
+    local player = game:GetService("Players").LocalPlayer
+
+    if not player then
+        return nil
+    end
+
+    local character = player.Character
 
     if not character then
         return nil
@@ -47,7 +59,17 @@ local function GetRoot()
     return character:FindFirstChild("HumanoidRootPart")
 end
 
+
+--//====================================================
+--// TARGET PART
+--//====================================================
+
 local function GetTargetPart(car)
+
+    if not car or not car.Parent then
+        return nil
+    end
+
     if car:IsA("BasePart") then
         return car
     end
@@ -59,11 +81,94 @@ local function GetTargetPart(car)
     return car:FindFirstChildWhichIsA("BasePart", true)
 end
 
+
+--//====================================================
+--// PROXIMITY PROMPT
+--//====================================================
+
 local function GetPrompt(car)
-    return car:FindFirstChildWhichIsA("ProximityPrompt", true)
+
+    if not car or not car.Parent then
+        return nil
+    end
+
+    local prompt = car:FindFirstChildWhichIsA(
+        "ProximityPrompt",
+        true
+    )
+
+    if prompt and prompt:IsA("ProximityPrompt") then
+        return prompt
+    end
+
+    return nil
 end
 
+
+--//====================================================
+--// PRESS E
+--//====================================================
+
+local function PressE(prompt)
+
+    if not prompt then
+        return false
+    end
+
+    --// Prüfen ob der Executor fireproximityprompt besitzt
+    if typeof(fireproximityprompt) == "function" then
+
+        local success = pcall(function()
+            fireproximityprompt(prompt)
+        end)
+
+        if success then
+            return true
+        end
+    end
+
+    --// Fallback
+    --// Verhindert "attempt to call a nil value"
+    local holdBegin = prompt.InputHoldBegin
+    local holdEnd = prompt.InputHoldEnd
+
+    if typeof(holdBegin) == "function"
+        and typeof(holdEnd) == "function" then
+
+        pcall(function()
+
+            prompt:InputHoldBegin()
+
+            local duration = tonumber(prompt.HoldDuration) or 0
+
+            if duration > 0 then
+                task.wait(duration + 0.1)
+            else
+                task.wait(0.1)
+            end
+
+            prompt:InputHoldEnd()
+
+        end)
+
+        return true
+    end
+
+    warn(
+        "[CYSON] E konnte nicht ausgelöst werden. " ..
+        "fireproximityprompt wird von deinem Executor nicht unterstützt."
+    )
+
+    return false
+end
+
+
+--//====================================================
+--// AUTO CLICK CAR
+--//====================================================
+
 local function AutoClickCar(car)
+
     if not AutoCarRunning then
         return
     end
@@ -75,40 +180,63 @@ local function AutoClickCar(car)
     local root = GetRoot()
     local target = GetTargetPart(car)
 
-    if not root or not target then
+    if not root then
+        warn("[CYSON] HumanoidRootPart nicht gefunden.")
         return
     end
+
+    if not target then
+        warn("[CYSON] Kein Ziel-Part gefunden:", car.Name)
+        return
+    end
+
 
     --// Zum Auto teleportieren
     root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
 
-    task.wait(0.15)
+    task.wait(0.20)
+
 
     if not AutoCarRunning then
         return
     end
 
-    --// ProximityPrompt suchen
+
+    --// Prompt suchen
     local prompt = GetPrompt(car)
 
-    if prompt then
-        -- Falls deine Executor-Umgebung fireproximityprompt unterstützt
-        pcall(function()
-            fireproximityprompt(prompt)
-        end)
+    if not prompt then
 
-        task.wait(0.25)
-    else
-        warn("[CYSON] Kein ProximityPrompt gefunden:", car.Name)
+        warn(
+            "[CYSON] Kein ProximityPrompt gefunden:",
+            car.Name
+        )
+
+        return
     end
+
+
+    --// E auslösen
+    PressE(prompt)
+
+    task.wait(0.25)
 end
 
+
+--//====================================================
+--// START AUTO CARS
+--//====================================================
+
 local function StartAutoCars()
+
     if AutoCarRunning then
         return
     end
 
     AutoCarRunning = true
+
+    print("[CYSON] Auto Cars gestartet.")
+
 
     AutoCarThread = task.spawn(function()
 
@@ -120,30 +248,50 @@ local function StartAutoCars()
                     break
                 end
 
+
                 local carName = "Car_" .. tostring(id)
+
                 local car = CarsFolder:FindFirstChild(carName)
 
+
                 if car then
-                    print("[CYSON] Auto:", carName)
+
+                    print(
+                        "[CYSON] Auto:",
+                        carName
+                    )
 
                     AutoClickCar(car)
 
                     task.wait(0.15)
+
                 end
+
             end
+
 
             --// Runde beendet
             if AutoCarRunning then
                 task.wait(0.5)
             end
+
         end
 
     end)
 end
 
+
+--//====================================================
+--// STOP AUTO CARS
+--//====================================================
+
 local function StopAutoCars()
+
     AutoCarRunning = false
     AutoCarThread = nil
+
+    print("[CYSON] Auto Cars gestoppt.")
+
 end
 
 
@@ -154,24 +302,56 @@ end
 local AutoCarCard = CreateFeatureCard(
     FeaturesTab,
     "Auto Collect Cars",
-    "Teleportiert automatisch zu den angegebenen Cars und drückt E.",
+    "Teleportiert automatisch zu den Cars und drückt E.",
     9
 )
 
-local AutoCarToggle, SetAutoCarToggle = CreateToggle(AutoCarCard)
+
+local AutoCarToggle, SetAutoCarToggle =
+    CreateToggle(AutoCarCard)
+
+
+--//====================================================
+--// TOGGLE
+--//====================================================
 
 AutoCarToggle.MouseButton1Click:Connect(function()
 
     if AutoCarRunning then
+
         StopAutoCars()
+
         SetAutoCarToggle(false)
 
         print("[CYSON] Auto Cars: OFF")
+
     else
+
         StartAutoCars()
+
         SetAutoCarToggle(true)
 
         print("[CYSON] Auto Cars: ON")
+
     end
 
 end)
+
+
+--//====================================================
+--// CLEANUP
+--//====================================================
+
+local function StopAutoCarsOnCharacterChange()
+
+    if AutoCarRunning then
+        StopAutoCars()
+        SetAutoCarToggle(false)
+    end
+
+end
+
+
+game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(
+    StopAutoCarsOnCharacterChange
+)
