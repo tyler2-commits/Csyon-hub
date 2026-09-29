@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB - VALUABLES & AUTO CARS (MOBILE & PC)
+--// CYSON HUB - VALUABLES & AUTO CARS (OPTIMIZED)
 --//====================================================
 
 --// SERVICES
@@ -318,42 +318,43 @@ task.spawn(function()
     end
 end)
 
---// 2. FLY VALUABLES (Mit Handy / Touch & ProximityPrompt Support)
-local GetValEnabled = CreateToggleCard("Fly Valuables + Loot", "Teleportiert zu Wertsachen/Coins & triggert Touch/Prompts.", 2)
+--// 2. FLY VALUABLES + LOOT (OPTIMIERT)
+local GetValEnabled = CreateToggleCard("Fly Valuables + Loot", "Blitzschneller Teleport zu Wertsachen/Coins mit sicherem Looting.", 2)
 
 task.spawn(function()
     while true do
         if GetValEnabled() then
             local character = LocalPlayer.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            
             if rootPart then
+                -- Alle Objekte im Workspace einmal durchsuchen
                 for _, obj in ipairs(Workspace:GetDescendants()) do
                     if not GetValEnabled() then break end
+                    
                     local nameLower = obj.Name:lower()
-                    if nameLower:find("valuable") or nameLower:find("coin") or nameLower:find("loot") or nameLower:find("item") or nameLower:find("cash") then
-                        local part = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+                    if nameLower:find("valuable") or nameLower:find("coin") or nameLower:find("loot") or nameLower:find("item") or nameLower:find("cash") or nameLower:find("money") then
+                        local part = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)))
+                        
                         if part then
                             pcall(function()
-                                rootPart.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                                -- Charakter für Stabilität kurz einfrieren
+                                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                                rootPart.CFrame = part.CFrame + Vector3.new(0, 2.5, 0)
                             end)
-                            task.wait(0.05)
                             
-                            -- PC Unterstützung (Taste F)
-                            pcall(function()
-                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-                                task.wait(0.02)
-                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-                            end)
+                            task.wait(0.03)
 
-                            -- Handy / Mobile Unterstützung (ProximityPrompts automatisch auslösen)
+                            -- A) ProximityPrompts auslösen (Mobile & PC)
                             pcall(function()
                                 for _, prompt in ipairs(obj:GetDescendants()) do
                                     if prompt:IsA("ProximityPrompt") then
                                         fireproximityprompt(prompt)
                                     end
                                 end
-                                if obj:IsA("Model") then
-                                    for _, prompt in ipairs(obj:GetDescendants()) do
+                                if obj.Parent and obj.Parent:IsA("Model") then
+                                    for _, prompt in ipairs(obj.Parent:GetDescendants()) do
                                         if prompt:IsA("ProximityPrompt") then
                                             fireproximityprompt(prompt)
                                         end
@@ -361,12 +362,28 @@ task.spawn(function()
                                 end
                             end)
 
-                            task.wait(0.2)
+                            -- B) Touch-Interaktionen simulieren (für aufhebbare Coins/Items)
+                            pcall(function()
+                                if part:IsA("BasePart") and rootPart then
+                                    firetouchinterest(rootPart, part, 0)
+                                    task.wait(0.01)
+                                    firetouchinterest(rootPart, part, 1)
+                                end
+                            end)
+
+                            -- C) PC-Tasten-Backup (F-Taste)
+                            pcall(function()
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                                task.wait(0.02)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                            end)
+
+                            task.wait(0.12) -- Kurze Pause pro Item für saubere Registrierung
                         end
                     end
                 end
             end
-            task.wait(0.4)
+            task.wait(0.3)
         else
             task.wait(0.5)
         end
