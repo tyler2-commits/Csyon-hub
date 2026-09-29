@@ -78,7 +78,7 @@ local supportedGames = {
 		Name = "Where Did I Park?",
 		ShortName = "WHERE DID I PARK?",
 		Icon = "🚗",
-		ScriptUrl = "loadstring(game:HttpGet("https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Where%20Did%20I%20Park.lua"
+		ScriptUrl = "https://raw.githubusercontent.com/tyler2-commits/Csyon-hub/refs/heads/main/Where%20Did%20I%20Park.lua"
 	},
 
 	{
