@@ -1,16 +1,22 @@
 --//====================================================
---// CYSON VALUABLES HUB (MOBILE & PC COMPATIBLE)
+--// CYSON HUB - VALUABLES & AUTO CARS (MOBILE & PC)
 --//====================================================
 
 --// SERVICES
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
+
+-- Remote Event für Cars holen
+local ParkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
+local Event = ParkingGame and ParkingGame:FindFirstChild("Action")
+local CarsFolder = Workspace:WaitForChild("LocalParkingVisuals"):WaitForChild("Cars")
 
 --// CHARACTER HELPER
 local function GetRoot()
@@ -22,8 +28,8 @@ end
 
 --// REMOVE OLD UI
 pcall(function()
-    if CoreGui:FindFirstChild("CYSONValuablesHub") then
-        CoreGui.CYSONValuablesHub:Destroy()
+    if CoreGui:FindFirstChild("CYSONHubCombined") then
+        CoreGui.CYSONHubCombined:Destroy()
     end
 end)
 
@@ -44,7 +50,7 @@ local Colors = {
 
 --// SCREEN GUI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "CYSONValuablesHub"
+ScreenGui.Name = "CYSONHubCombined"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = CoreGui
@@ -52,7 +58,7 @@ ScreenGui.Parent = CoreGui
 --// MAIN WINDOW
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 420, 0, 310)
+MainFrame.Size = UDim2.new(0, 420, 0, 380)
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.BackgroundColor3 = Colors.Background
@@ -95,10 +101,10 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 300, 0, 26)
 Title.Position = UDim2.new(0, 18, 0, 17)
 Title.BackgroundTransparency = 1
-Title.Text = "💎 CYSON VALUABLES FARM"
+Title.Text = "⚡ CYSON HUB (CARS & VALUABLES)"
 Title.Font = Enum.Font.GothamBlack
 Title.TextColor3 = Colors.White
-Title.TextSize = 16
+Title.TextSize = 15
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
@@ -117,9 +123,35 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 8)
 CloseCorner.Parent = CloseButton
 
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 110, 0, 40)
+OpenButton.Position = UDim2.new(0, 15, 0.5, -20)
+OpenButton.BackgroundColor3 = Colors.Panel
+OpenButton.TextColor3 = Colors.White
+OpenButton.Text = "⚡ OPEN"
+OpenButton.Font = Enum.Font.GothamBold
+OpenButton.TextSize = 11
+OpenButton.Visible = false
+OpenButton.AutoButtonColor = false
+OpenButton.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 10)
+OpenCorner.Parent = OpenButton
+
+local OpenStroke = Instance.new("UIStroke")
+OpenStroke.Thickness = 1.5
+OpenStroke.Color = Colors.Accent
+OpenStroke.Parent = OpenButton
+
 CloseButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
     OpenButton.Visible = true
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenButton.Visible = false
 end)
 
 --// CONTENT CONTAINER
@@ -140,7 +172,7 @@ UIListLayout.Padding = UDim.new(0, 12)
 UIListLayout.Parent = ContentContainer
 
 --// TOGGLE CREATOR HELPER
-local function CreateValuableToggle(titleText, descText, order)
+local function CreateToggleCard(titleText, descText, order)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -4, 0, 75)
     card.BackgroundColor3 = Colors.Card
@@ -246,10 +278,48 @@ local function CreateValuableToggle(titleText, descText, order)
     return function() return enabled end
 end
 
---// LOGIK & TOGGLES ERSTELLEN
+--// 1. AUTO COLLECT CARS (1 bis 100.000 + Remote Search)
+local GetAutoCarEnabled = CreateToggleCard("Auto Collect Cars", "Scannt Cars 1 bis 100.000, sendet Search & teleportiert.", 1)
 
--- 1. Fly Valuables + Mobile Touch / ProximityPrompt Support
-local GetValEnabled = CreateValuableToggle("Fly Valuables + Loot", "Teleportiert zu Wertsachen/Coins & triggert Touch/Prompts.", 1)
+task.spawn(function()
+    while true do
+        if GetAutoCarEnabled() then
+            for i = 1, 100000 do
+                if not GetAutoCarEnabled() then break end
+
+                local carName = "Car_" .. tostring(i)
+                local car = CarsFolder:FindFirstChild(carName)
+
+                if car then
+                    pcall(function()
+                        if Event then Event:FireServer("Search") end
+                    end)
+                    
+                    task.wait(0.05)
+
+                    local root = GetRoot()
+                    local target = car:IsA("BasePart") and car or (car.PrimaryPart or car:FindFirstChildWhichIsA("BasePart", true))
+
+                    if root and target then
+                        root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+                    end
+
+                    task.wait(0.15)
+                end
+
+                if i % 100 == 0 then
+                    task.wait(0.03)
+                end
+            end
+            task.wait(1)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+--// 2. FLY VALUABLES (Mit Handy / Touch & ProximityPrompt Support)
+local GetValEnabled = CreateToggleCard("Fly Valuables + Loot", "Teleportiert zu Wertsachen/Coins & triggert Touch/Prompts.", 2)
 
 task.spawn(function()
     while true do
@@ -301,34 +371,6 @@ task.spawn(function()
             task.wait(0.5)
         end
     end
-end)
-
-
---// OPEN BUTTON (WENN UI GESCHLOSSEN WIRD)
-OpenButton = Instance.new("TextButton")
-OpenButton.Size = UDim2.new(0, 110, 0, 40)
-OpenButton.Position = UDim2.new(0, 15, 0.5, -20)
-OpenButton.BackgroundColor3 = Colors.Panel
-OpenButton.TextColor3 = Colors.White
-OpenButton.Text = "💎 OPEN"
-OpenButton.Font = Enum.Font.GothamBold
-OpenButton.TextSize = 11
-OpenButton.Visible = false
-OpenButton.AutoButtonColor = false
-OpenButton.Parent = ScreenGui
-
-local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 10)
-OpenCorner.Parent = OpenButton
-
-local OpenStroke = Instance.new("UIStroke")
-OpenStroke.Thickness = 1.5
-OpenStroke.Color = Colors.Accent
-OpenStroke.Parent = OpenButton
-
-OpenButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenButton.Visible = false
 end)
 
 --// DRAGGING (FÜR MOBILE & PC)
