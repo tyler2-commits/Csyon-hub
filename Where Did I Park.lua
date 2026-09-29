@@ -8,18 +8,21 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 
--- Remote Event über Cobalt Pfad holen
-local Event = ReplicatedStorage:WaitForChild("ParkingGame"):WaitForChild("Action")
+-- Remote Event über Pfad holen
+local ParkingGame = ReplicatedStorage:FindFirstChild("ParkingGame")
+local Event = ParkingGame and ParkingGame:FindFirstChild("Action")
 
-local CarsFolder = workspace
-    :WaitForChild("LocalParkingVisuals")
-    :WaitForChild("Cars")
+local CarsFolder = Workspace:WaitForChild("LocalParkingVisuals"):WaitForChild("Cars")
 
 local AutoCarRunning = false
 local AutoCarThread = nil
+
+local selectedCarColor = "blau"
 
 --// CHARACTER HELPER
 local function GetRoot()
@@ -376,6 +379,7 @@ end
 
 local PlayerTab = CreateTab("Player")
 local FeaturesTab = CreateTab("Features")
+local ValuablesTab = CreateTab("Valuables")
 local SettingsTab = CreateTab("Settings")
 
 --// TAB BUTTONS
@@ -466,9 +470,10 @@ local function CreateTabButton(text, icon, y, target)
     return Activate
 end
 
-local activatePlayer = CreateTabButton("Player", "♙", 58, PlayerTab)
-local activateFeatures = CreateTabButton("Game Cheats", "⚡", 112, FeaturesTab)
-local activateSettings = CreateTabButton("Settings", "⚙", 166, SettingsTab)
+CreateTabButton("Player", "♙", 58, PlayerTab)
+CreateTabButton("Game Cheats", "⚡", 110, FeaturesTab)
+CreateTabButton("Valuables & Farm", "💎", 162, ValuablesTab)
+CreateTabButton("Settings", "⚙", 214, SettingsTab)
 
 --// UI HELPERS
 local function CreateSectionTitle(parent, title, subtitle, order)
@@ -618,20 +623,21 @@ local function CreateToggle(parent)
 end
 
 --// BUILD TABS CONTENT
-CreateSectionTitle(PlayerTab, "Player Modifications", "Steuere Bewegung und Spielkomfort.", 1)
-CreateToggle(CreateFeatureCard(PlayerTab, "Anti-AFK Protection", "Verhindert automatische Kicks wegen Inaktivität.", 2))
 
+-- Player Tab
+CreateSectionTitle(PlayerTab, "Player Modifications", "Steuere Bewegung und Spielkomfort.", 1)
+local antiAfkCard = CreateFeatureCard(PlayerTab, "Anti-AFK Protection", "Verhindert automatische Kicks wegen Inaktivität.", 2)
+CreateToggle(antiAfkCard)
+
+-- Features Tab (Game Automation & Autofarm Farbe)
 CreateSectionTitle(FeaturesTab, "Game Automation", "Automatisierte Funktionen für das Spiel.", 1)
 
--- ERSTELLEN DER KARTE FÜR "AUTO CAR SCANNER"
-local AutoCarCard = CreateFeatureCard(FeaturesTab, "Auto Collect Cars", "Scannnt Autos von 1 bis 100.000 via Remote und teleportiert danach.", 2)
+local AutoCarCard = CreateFeatureCard(FeaturesTab, "Auto Collect Cars", "Scannt Autos von 1 bis 100.000 via Remote und teleportiert danach.", 2)
 local AutoCarToggle, SetAutoCarToggle = CreateToggle(AutoCarCard)
 
--- LOGIK FÜR AUTO CARS (Zuerst scannen, dann teleportieren)
 local function StartAutoCars()
     if AutoCarRunning then return end
     AutoCarRunning = true
-    print("[CYSON] Auto Remote Scanner gestartet.")
 
     AutoCarThread = task.spawn(function()
         while AutoCarRunning do
@@ -642,14 +648,12 @@ local function StartAutoCars()
                 local car = CarsFolder:FindFirstChild(carName)
 
                 if car then
-                    -- 1. Erst das Auto scannen (Remote Event feuern)
                     pcall(function()
-                        Event:FireServer("Search")
+                        if Event then Event:FireServer("Search") end
                     end)
                     
-                    task.wait(0.05) -- Kurze Pause nach dem Scan
+                    task.wait(0.05)
 
-                    -- 2. Erst danach zum Auto teleportieren
                     local root = GetRoot()
                     local target = car:IsA("BasePart") and car or (car.PrimaryPart or car:FindFirstChildWhichIsA("BasePart", true))
 
@@ -661,7 +665,7 @@ local function StartAutoCars()
                 end
 
                 if i % 100 == 0 then
-                    task.wait(0.03) -- Lag-Schutz alle 100 Schritte
+                    task.wait(0.03)
                 end
             end
 
@@ -675,15 +679,11 @@ end
 local function StopAutoCars()
     AutoCarRunning = false
     AutoCarThread = nil
-    print("[CYSON] Auto Remote Scanner gestoppt.")
 end
 
 AutoCarToggle.MouseButton1Click:Connect(function()
-    -- Da der Toggle intern seinen Status umschaltet, prüfen wir den aktuellen Zustand
-    -- Wir nutzen eine kleine Verzögerung oder greifen direkt auf die Logik zu:
     task.spawn(function()
         task.wait(0.01)
-        -- Wir prüfen über einen kleinen Workaround, ob der Toggle an ist oder triggern direkt:
         if AutoCarRunning then
             StopAutoCars()
             SetAutoCarToggle(false)
@@ -700,6 +700,182 @@ LocalPlayer.CharacterRemoving:Connect(function()
         SetAutoCarToggle(false)
     end
 end)
+
+
+--// VALUABLES & INTEGRATED FUNCTIONS TAB
+CreateSectionTitle(ValuablesTab, "Valuables & Extra Cheats", "Sammle Wertsachen und steuere Autofarm-Farben.", 1)
+
+-- Farbauswahl Card / Button
+local ColorCard = CreateFeatureCard(ValuablesTab, "Autofarm Farbe", "Wechsle die Zielfarbe für den Car-Farm (Blau / Rot).", 2)
+local ColorBtn = Instance.new("TextButton")
+ColorBtn.Size = UDim2.new(0, 110, 0, 32)
+ColorBtn.Position = UDim2.new(1, -125, 0.5, -16)
+ColorBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
+ColorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ColorBtn.TextSize = 11
+ColorBtn.Font = Enum.Font.GothamBold
+ColorBtn.Text = "BLAU"
+ColorBtn.Parent = ColorCard
+
+local ColorCorner = Instance.new("UICorner")
+ColorCorner.CornerRadius = UDim.new(0, 8)
+ColorCorner.Parent = ColorBtn
+
+ColorBtn.MouseButton1Click:Connect(function()
+    if selectedCarColor == "blau" then
+        selectedCarColor = "rot"
+        ColorBtn.Text = "ROT"
+        ColorBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    else
+        selectedCarColor = "blau"
+        ColorBtn.Text = "BLAU"
+        ColorBtn.BackgroundColor3 = Color3.fromRGB(2, 99, 255)
+    end
+end)
+
+-- 1. Auto-Collect (1321)
+local collectCard = CreateFeatureCard(ValuablesTab, "Auto-Collect (1321)", "Führt automatisch Collect-Events im Hintergrund aus.", 3)
+local _, setCollect = CreateToggle(collectCard)
+task.spawn(function()
+    while true do
+        local state = _G.AutoCollect1321
+        if state then
+            if Event then pcall(function() Event:FireServer("Collect", 1321) end) end
+            task.wait(0.1)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+-- Verknüpfe den UI-Toggle mit der Logik
+local originalCollectClick = collectCard:FindFirstChildWhichIsA("TextButton", true)
+if originalCollectClick then
+    -- Wir hängen uns an den bestehenden Click-Event
+end
+
+-- 2. Auto-Search Event
+local searchCard = CreateFeatureCard(ValuablesTab, "Auto-Search Event", "Sendet kontinuierlich Suchanfragen an den Server.", 4)
+local _, setSearch = CreateToggle(searchCard)
+task.spawn(function()
+    while true do
+        if _G.AutoSearchState then
+            if Event then pcall(function() Event:FireServer("Search") end) end
+            task.wait(0.4)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+-- 3. Fly Car Farm + E
+local flyCarCard = CreateFeatureCard(ValuablesTab, "Fly Car Farm + E", "Teleportiert zu passenden Autos und drückt automatisch E.", 5)
+local _, setFlyCar = CreateToggle(flyCarCard)
+task.spawn(function()
+    local visitedCars = {}
+    while true do
+        if _G.FlyCarFarmState then
+            local character = LocalPlayer.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if not _G.FlyCarFarmState then break end
+                    if obj:IsA("Model") then
+                        local isTargetCar = false
+                        for _, part in ipairs(obj:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                local col = part.Color
+                                local r, g, b = math.floor(col.R * 255 + 0.5), math.floor(col.G * 255 + 0.5), math.floor(col.B * 255 + 0.5)
+                                if selectedCarColor == "blau" and math.abs(r - 2) <= 25 and math.abs(g - 99) <= 25 and math.abs(b - 255) <= 25 then
+                                    isTargetCar = true; break
+                                elseif selectedCarColor == "rot" and math.abs(r - 255) <= 35 and math.abs(g - 50) <= 35 and math.abs(b - 50) <= 35 then
+                                    isTargetCar = true; break
+                                end
+                            end
+                        end
+                        if isTargetCar and not visitedCars[obj] then
+                            local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                            if primaryPart then
+                                visitedCars[obj] = true
+                                pcall(function()
+                                    rootPart.CFrame = primaryPart.CFrame + Vector3.new(0, 4, 0)
+                                end)
+                                task.wait(0.05)
+                                pcall(function()
+                                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                                    task.wait(0.03)
+                                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                                    if Event then Event:FireServer("Collect", 1321) end
+                                end)
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end
+            end
+            task.wait(0.5)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+-- 4. Fly Valuables + F
+local flyValCard = CreateFeatureCard(ValuablesTab, "Fly Valuables + F", "Sucht nach Valuables/Coins/Loot, teleportiert hin und drückt F.", 6)
+local _, setFlyVal = CreateToggle(flyValCard)
+task.spawn(function()
+    while true do
+        if _G.FlyValuablesState then
+            local character = LocalPlayer.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            if rootPart then
+                for _, obj in ipairs(Workspace:GetDescendants()) do
+                    if not _G.FlyValuablesState then break end
+                    local nameLower = obj.Name:lower()
+                    if nameLower:find("valuable") or nameLower:find("coin") or nameLower:find("loot") or nameLower:find("item") then
+                        local part = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+                        if part then
+                            pcall(function()
+                                rootPart.CFrame = part.CFrame + Vector3.new(0, 4, 0)
+                            end)
+                            task.wait(0.05)
+                            pcall(function()
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+                                task.wait(0.03)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+                            end)
+                            task.wait(0.25)
+                        end
+                    end
+                end
+            end
+            task.wait(0.5)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+-- Globale Toggles mit den UI-Schaltern verbinden
+collectCard:FindFirstChildWhichIsA("TextButton", true).MouseButton1Click:Connect(function()
+    task.wait(0.01)
+    _G.AutoCollect1321 = not _G.AutoCollect1321
+end)
+
+searchCard:FindFirstChildWhichIsA("TextButton", true).MouseButton1Click:Connect(function()
+    task.wait(0.01)
+    _G.AutoSearchState = not _G.AutoSearchState
+end)
+
+flyCarCard:FindFirstChildWhichIsA("TextButton", true).MouseButton1Click:Connect(function()
+    task.wait(0.01)
+    _G.FlyCarFarmState = not _G.FlyCarFarmState
+end)
+
+flyValCard:FindFirstChildWhichIsA("TextButton", true).MouseButton1Click:Connect(function()
+    task.wait(0.01)
+    _G.FlyValuablesState = not _G.FlyValuablesState
+end)
+
 
 -- Settings Tab
 CreateSectionTitle(SettingsTab, "Settings", "Passe Theme, Größe und Darstellung an.", 1)
@@ -869,6 +1045,3 @@ OpenButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = true
     OpenButton.Visible = false
 end)
-
---// INITIAL TAB
-activatePlayer()
