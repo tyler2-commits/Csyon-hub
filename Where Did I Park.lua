@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB - VALUABLES & AUTO CARS (OPTIMIZED)
+--// CYSON HUB - VALUABLES & AUTO CARS (SMART RADIUS)
 --//====================================================
 
 --// SERVICES
@@ -278,47 +278,65 @@ local function CreateToggleCard(titleText, descText, order)
     return function() return enabled end
 end
 
---// 1. AUTO COLLECT CARS (1 bis 100.000 + Remote Search)
-local GetAutoCarEnabled = CreateToggleCard("Auto Collect Cars", "Scannt Cars 1 bis 100.000, sendet Search & teleportiert.", 1)
+--// 1. AUTO COLLECT CARS (Mit gesuchter-Radius-Prüfung)
+local GetAutoCarEnabled = CreateToggleCard("Auto Collect Cars", "Ignoriert Autos, die im Radius bereits gesucht wurden.", 1)
 
 task.spawn(function()
+    local searchedCars = {} -- Tabelle speichert bereits bearbeitete Autos
+    local searchRadius = 35 -- Abstand in Studs, ab dem ein Auto als "schon im Radius" gilt
+
     while true do
         if GetAutoCarEnabled() then
+            -- Optional: Wenn Toggle frisch angeschaltet wird, Liste alle paar Durchläufe mal leeren, 
+            -- falls Autos despawnen/neu spawnen (nach 5000 durchläufen oder manuell)
+            
             for i = 1, 100000 do
                 if not GetAutoCarEnabled() then break end
 
                 local carName = "Car_" .. tostring(i)
                 local car = CarsFolder:FindFirstChild(carName)
 
-                if car then
-                    pcall(function()
-                        if Event then Event:FireServer("Search") end
-                    end)
-                    
-                    task.wait(0.05)
-
-                    local root = GetRoot()
+                if car and not searchedCars[carName] then
                     local target = car:IsA("BasePart") and car or (car.PrimaryPart or car:FindFirstChildWhichIsA("BasePart", true))
+                    local root = GetRoot()
 
-                    if root and target then
-                        root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+                    if target and root then
+                        -- Prüfen, ob das Auto bereits zu nah ist (bereits gesucht/bearbeitet)
+                        local distance = (root.Position - target.Position).Magnitude
+                        
+                        if distance > searchRadius then
+                            -- Teleportieren, da es außerhalb des Radius ist
+                            root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.05)
+
+                            pcall(function()
+                                if Event then Event:FireServer("Search") end
+                            end)
+
+                            -- Als gesucht markieren, damit es im Radius nicht nochmal angeflogen wird
+                            searchedCars[carName] = true
+                            task.wait(0.15)
+                        else
+                            -- Wenn es im Radius liegt, direkt als gesucht markieren und überspringen
+                            searchedCars[carName] = true
+                        end
                     end
-
-                    task.wait(0.15)
                 end
 
-                if i % 100 == 0 then
+                if i % 200 == 0 then
                     task.wait(0.03)
                 end
             end
             task.wait(1)
         else
+            -- Wenn Toggle aus ist, Liste leeren
+            searchedCars = {}
             task.wait(0.5)
         end
     end
 end)
 
---// 2. FLY VALUABLES + LOOT (OPTIMIERT)
+--// 2. FLY VALUABLES + LOOT
 local GetValEnabled = CreateToggleCard("Fly Valuables + Loot", "Blitzschneller Teleport zu Wertsachen/Coins mit sicherem Looting.", 2)
 
 task.spawn(function()
@@ -326,10 +344,8 @@ task.spawn(function()
         if GetValEnabled() then
             local character = LocalPlayer.Character
             local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
             
             if rootPart then
-                -- Alle Objekte im Workspace einmal durchsuchen
                 for _, obj in ipairs(Workspace:GetDescendants()) do
                     if not GetValEnabled() then break end
                     
@@ -339,14 +355,12 @@ task.spawn(function()
                         
                         if part then
                             pcall(function()
-                                -- Charakter für Stabilität kurz einfrieren
                                 rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                                 rootPart.CFrame = part.CFrame + Vector3.new(0, 2.5, 0)
                             end)
                             
                             task.wait(0.03)
 
-                            -- A) ProximityPrompts auslösen (Mobile & PC)
                             pcall(function()
                                 for _, prompt in ipairs(obj:GetDescendants()) do
                                     if prompt:IsA("ProximityPrompt") then
@@ -362,7 +376,6 @@ task.spawn(function()
                                 end
                             end)
 
-                            -- B) Touch-Interaktionen simulieren (für aufhebbare Coins/Items)
                             pcall(function()
                                 if part:IsA("BasePart") and rootPart then
                                     firetouchinterest(rootPart, part, 0)
@@ -371,14 +384,13 @@ task.spawn(function()
                                 end
                             end)
 
-                            -- C) PC-Tasten-Backup (F-Taste)
                             pcall(function()
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
                                 task.wait(0.02)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
                             end)
 
-                            task.wait(0.12) -- Kurze Pause pro Item für saubere Registrierung
+                            task.wait(0.12)
                         end
                     end
                 end
