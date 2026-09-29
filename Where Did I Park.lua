@@ -1,5 +1,5 @@
 --//====================================================
---// CYSON HUB - VALUABLES & AUTO CARS (SMART RADIUS)
+--// CYSON HUB - VALUABLES & AUTO CARS (FULL RANGE)
 --//====================================================
 
 --// SERVICES
@@ -278,34 +278,30 @@ local function CreateToggleCard(titleText, descText, order)
     return function() return enabled end
 end
 
---// 1. AUTO COLLECT CARS (Mit gesuchter-Radius-Prüfung)
-local GetAutoCarEnabled = CreateToggleCard("Auto Collect Cars", "Ignoriert Autos, die im Radius bereits gesucht wurden.", 1)
+--// 1. AUTO COLLECT CARS (Scannt ALLE vorhandenen Autos bis 100k dynamisch)
+local GetAutoCarEnabled = CreateToggleCard("Auto Collect Cars", "Durchsucht alle geladenen Autos im Ordner (Car_1 bis Car_100000).", 1)
 
 task.spawn(function()
-    local searchedCars = {} -- Tabelle speichert bereits bearbeitete Autos
-    local searchRadius = 35 -- Abstand in Studs, ab dem ein Auto als "schon im Radius" gilt
+    local searchedCars = {}
+    local searchRadius = 35 -- Radius in Studs, in dem nah gelegene Autos ignoriert werden
 
     while true do
         if GetAutoCarEnabled() then
-            -- Optional: Wenn Toggle frisch angeschaltet wird, Liste alle paar Durchläufe mal leeren, 
-            -- falls Autos despawnen/neu spawnen (nach 5000 durchläufen oder manuell)
-            
-            for i = 1, 100000 do
+            -- Holt alle echten Autos aus dem Ordner, egal welche Nummer (ob 1, 96391 oder 100000)
+            local allCars = CarsFolder:GetChildren()
+
+            for _, car in ipairs(allCars) do
                 if not GetAutoCarEnabled() then break end
 
-                local carName = "Car_" .. tostring(i)
-                local car = CarsFolder:FindFirstChild(carName)
-
-                if car and not searchedCars[carName] then
+                if car and not searchedCars[car.Name] then
                     local target = car:IsA("BasePart") and car or (car.PrimaryPart or car:FindFirstChildWhichIsA("BasePart", true))
                     local root = GetRoot()
 
                     if target and root then
-                        -- Prüfen, ob das Auto bereits zu nah ist (bereits gesucht/bearbeitet)
                         local distance = (root.Position - target.Position).Magnitude
                         
                         if distance > searchRadius then
-                            -- Teleportieren, da es außerhalb des Radius ist
+                            -- Teleportieren, da außerhalb des Radius
                             root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
                             task.wait(0.05)
 
@@ -313,23 +309,17 @@ task.spawn(function()
                                 if Event then Event:FireServer("Search") end
                             end)
 
-                            -- Als gesucht markieren, damit es im Radius nicht nochmal angeflogen wird
-                            searchedCars[carName] = true
+                            searchedCars[car.Name] = true
                             task.wait(0.15)
                         else
-                            -- Wenn es im Radius liegt, direkt als gesucht markieren und überspringen
-                            searchedCars[carName] = true
+                            -- Innerhalb des Radius direkt als gesucht markieren
+                            searchedCars[car.Name] = true
                         end
                     end
-                end
-
-                if i % 200 == 0 then
-                    task.wait(0.03)
                 end
             end
             task.wait(1)
         else
-            -- Wenn Toggle aus ist, Liste leeren
             searchedCars = {}
             task.wait(0.5)
         end
