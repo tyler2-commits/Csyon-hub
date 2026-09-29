@@ -1,5 +1,5 @@
 --//====================================================
---// AUTO CAR E-CLICK (1 bis 100.000)
+--// AUTO CAR E-CLICK (Fehlerfrei)
 --//====================================================
 
 local AutoCarRunning = false
@@ -52,38 +52,47 @@ end
 
 
 --//====================================================
---// PRESS E
+--// PRESS E (Sicherer gemacht gegen "nil" Fehler)
 --//====================================================
 
 local function PressE(prompt)
     if not prompt then return false end
 
-    if typeof(fireproximityprompt) == "function" then
+    -- Prüfen ob die globale Funktion existiert, bevor sie aufgerufen wird
+    if _G.fireproximityprompt or (typeof(fireproximityprompt) == "function") then
         local success = pcall(function()
-            fireproximityprompt(prompt)
+            if typeof(fireproximityprompt) == "function" then
+                fireproximityprompt(prompt)
+            else
+                _G.fireproximityprompt(prompt)
+            end
         end)
         if success then return true end
     end
 
-    local holdBegin = prompt.InputHoldBegin
-    local holdEnd = prompt.InputHoldEnd
+    -- Fallback: Simulieren über Events oder ProximityPrompt-Eigenschaften falls möglich
+    local successFallback = pcall(function()
+        -- Manche Executors unterstützen das direkte Auslösen via Trigger
+        if prompt.Enabled then
+            -- Alternativer Klick-Versuch
+            fireclickdetector(prompt.Parent) -- falls ClickDetector da ist
+        end
+    end)
 
-    if typeof(holdBegin) == "function" and typeof(holdEnd) == "function" then
-        pcall(function()
-            prompt:InputHoldBegin()
-            local duration = tonumber(prompt.HoldDuration) or 0
-            if duration > 0 then
-                task.wait(duration + 0.1)
-            else
-                task.wait(0.1)
-            end
-            prompt:InputHoldEnd()
-        end)
+    if successFallback then
         return true
     end
 
-    warn("[CYSON] E konnte nicht ausgelöst werden (fireproximityprompt fehlt).")
-    return false
+    -- Letzter Ausweg: Versuchen, die Hold-Funktionen sicher aufzurufen
+    local ok = pcall(function()
+        if prompt.InputHoldBegin and prompt.InputHoldEnd then
+            prompt:InputHoldBegin()
+            task.wait(tonumber(prompt.HoldDuration) or 0.1)
+            prompt:InputHoldEnd()
+        end
+    end)
+
+    return ok
 end
 
 
@@ -97,16 +106,9 @@ local function AutoClickCar(car)
     local root = GetRoot()
     local target = GetTargetPart(car)
 
-    if not root then
-        warn("[CYSON] HumanoidRootPart nicht gefunden.")
-        return
-    end
+    if not root or not target then return end
 
-    if not target then
-        return
-    end
-
-    -- Zum Auto teleportieren (etwas erhöht)
+    -- Zum Auto teleportieren
     root.CFrame = target.CFrame + Vector3.new(0, 3, 0)
     task.wait(0.15)
 
@@ -131,7 +133,6 @@ local function StartAutoCars()
 
     AutoCarThread = task.spawn(function()
         while AutoCarRunning do
-            -- Schleife von Car 1 bis 100.000
             for i = 1, 100000 do
                 if not AutoCarRunning then break end
 
@@ -139,20 +140,16 @@ local function StartAutoCars()
                 local car = CarsFolder:FindFirstChild(carName)
 
                 if car then
-                    print("[CYSON] Scanne Auto:", carName)
                     AutoClickCar(car)
                 end
 
-                -- Kurzer Yield alle paar Autos, um Lag / Crashes zu verhindern
-                if i % 50 == 0 then
-                    task.wait(0.05)
+                if i % 100 == 0 then
+                    task.wait(0.03) -- Kleines Yield gegen Lag
                 end
             end
 
-            -- Wenn alle 100.000 durch sind, kurz warten und ggf. neu starten
             if AutoCarRunning then
-                print("[CYSON] Durchlauf beendet. Warte vor dem nächsten Scan...")
-                task.wait(2)
+                task.wait(1)
             end
         end
     end)
